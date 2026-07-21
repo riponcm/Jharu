@@ -1,0 +1,8 @@
+# These entries add a "Sponsor" button to the repository.
+# GitHub Sponsors requires enabling it once at https://github.com/sponsors.
+github: [riponcm]
+
+# Optional alternative platforms — uncomment and fill in a handle to use.
+# ko_fi: your-handle
+# buy_me_a_coffee: your-handle
+# custom: ["https://matily.org"]

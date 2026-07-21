@@ -96,6 +96,13 @@ npm run tauri build    # produce installers for your platform
 
 On macOS, grant Full Disk Access (System Settings, Privacy and Security) for complete scan coverage. Jharu detects missing access and offers to open the right settings pane.
 
+### Opening Jharu the first time
+
+Jharu is not yet signed with a paid developer certificate (see [Support Jharu](#support-jharu) below), so your operating system shows a one-time warning the first time you open it. This is expected for open source apps and does not mean anything is wrong — the download is verified by a cryptographic signature on every in-app update.
+
+- **macOS:** if you see "Jharu cannot be opened because Apple cannot verify it", right-click (or Control-click) the app and choose **Open**, then confirm. You only do this once.
+- **Windows:** if SmartScreen shows "Windows protected your PC", click **More info**, then **Run anyway**.
+
 ## Frequently asked questions
 
 **How do I clear the Hugging Face model cache?**
@@ -134,6 +141,23 @@ Jharu's Uninstaller lists every installed app together with the data it has accu
 - Treemap visualization for deep clean
 - Duplicate file detection
 - Localized UI, starting with Bengali and Hindi
+
+## Support Jharu
+
+Jharu is free, open source, and has no ads, telemetry, or paid tier — and it always will. But shipping a desktop app that users can install without scary security warnings costs real money every year, and that is the one thing an individual developer cannot absorb alone:
+
+| What it unlocks | Cost |
+| --- | --- |
+| **Apple notarization** — removes the "Apple cannot verify this app" warning on every Mac | 99 USD / year (Apple Developer Program) |
+| **Windows code signing** — removes the "Windows protected your PC" SmartScreen warning | ~100–400 USD / year (code signing certificate) |
+
+Every star and every sponsorship goes directly toward these costs. If Jharu reclaimed gigabytes of your disk, here is how you can pay it forward in seconds:
+
+- **Star the repository.** It is free, it takes one click, and it is the single biggest thing that helps other developers discover Jharu.
+- **Sponsor the project.** Even a one-time contribution the size of a coffee helps cover the signing certificates that make Jharu safe and frictionless for everyone to install. Use the **Sponsor** button at the top of this repository.
+- **Spread the word.** Share Jharu with a teammate whose disk is always full, or post about it — reach is what turns a side project into a maintained tool.
+
+Once the signing costs are covered, every release will install cleanly on macOS and Windows with no warnings at all. Thank you for helping keep Jharu free and independent.
 
 ## Contributing
 
