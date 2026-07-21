@@ -41,6 +41,9 @@ Lists installed applications with both their bundle size and the data they have 
 **Drive health.**
 Capacity, file system, and SMART status for every mounted drive, with usage gauges and early warnings as disks approach full.
 
+**In-app updates.**
+Jharu checks GitHub releases for new versions and downloads and installs them from inside the app — signed, verified, and with a one-click restart.
+
 ## Screenshots
 
 <div align="center">

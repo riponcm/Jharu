@@ -29,6 +29,15 @@ pub fn check_access() -> AccessStatus {
     }
 }
 
+/// Opens an https link in the user's default browser.
+#[tauri::command]
+pub fn open_url(url: String) -> Result<(), String> {
+    if !url.starts_with("https://") {
+        return Err("Only https links can be opened".into());
+    }
+    tauri_plugin_opener::open_url(url, None::<String>).map_err(|e| e.to_string())
+}
+
 #[tauri::command]
 pub fn open_access_settings() -> Result<(), String> {
     #[cfg(target_os = "macos")]

@@ -6,11 +6,12 @@ import Browsers from "./views/Browsers";
 import Uninstaller from "./views/Uninstaller";
 import DriveHealth from "./views/DriveHealth";
 import Junk from "./views/Junk";
+import About from "./views/About";
 import { formatBytes } from "./format";
 import type { AccessStatus } from "./types";
 import "./App.css";
 
-type View = "dev" | "deep" | "junk" | "browsers" | "uninstall" | "health";
+type View = "dev" | "deep" | "junk" | "browsers" | "uninstall" | "health" | "about";
 
 const NAV: { id: View; label: string; icon: string; sub: string }[] = [
   { id: "dev", label: "Dev clean", icon: "⌘", sub: "ML and dev caches" },
@@ -19,6 +20,7 @@ const NAV: { id: View; label: string; icon: string; sub: string }[] = [
   { id: "browsers", label: "Browsers", icon: "◍", sub: "Web caches" },
   { id: "uninstall", label: "Uninstaller", icon: "✕", sub: "Apps and leftovers" },
   { id: "health", label: "Drive health", icon: "♥", sub: "Capacity and SMART" },
+  { id: "about", label: "About", icon: "◈", sub: "Version and updates" },
 ];
 
 function App() {
@@ -103,6 +105,7 @@ function App() {
         {view === "browsers" && <Browsers onRecovered={addRecovered} />}
         {view === "uninstall" && <Uninstaller onRecovered={addRecovered} />}
         {view === "health" && <DriveHealth />}
+        {view === "about" && <About />}
       </main>
     </div>
   );

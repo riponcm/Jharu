@@ -68,6 +68,8 @@ fn dir_size(path: &std::path::Path) -> u64 {
 pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_opener::init())
+        .plugin(tauri_plugin_updater::Builder::new().build())
+        .plugin(tauri_plugin_process::init())
         .invoke_handler(tauri::generate_handler![
             scan_system,
             clean_paths,
@@ -79,7 +81,8 @@ pub fn run() {
             health::drive_health,
             junk::junk_scan,
             access::check_access,
-            access::open_access_settings
+            access::open_access_settings,
+            access::open_url
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

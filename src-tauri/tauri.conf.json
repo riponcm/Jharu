@@ -32,6 +32,15 @@
       "icons/128x128@2x.png",
       "icons/icon.icns",
       "icons/icon.ico"
-    ]
+    ],
+    "createUpdaterArtifacts": true
+  },
+  "plugins": {
+    "updater": {
+      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDIzRjBDOTFFRkE1OURDNTEKUldSUjNGbjZIc253SThXTW1MRjJ6WFpQbitSY1l0MFN4M0dzeGlGUmRGR1YwK0dpOFNiTk11TzEK",
+      "endpoints": [
+        "https://github.com/riponcm/Jharu/releases/latest/download/latest.json"
+      ]
+    }
   }
 }
