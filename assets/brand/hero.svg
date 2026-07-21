@@ -1,0 +1,89 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 240" width="900" height="240" role="img" aria-label="Jharu sweeping junk files away and freeing disk space">
+  <title>Jharu — storage insight and cleanup</title>
+  <style>
+    .broom {
+      transform-box: fill-box;
+      transform-origin: 50% 0%;
+      animation: sweep 1.8s ease-in-out infinite;
+    }
+    @keyframes sweep {
+      0%, 100% { transform: rotate(-9deg); }
+      50% { transform: rotate(11deg); }
+    }
+    .junk {
+      animation: fly 1.8s ease-in infinite;
+    }
+    .j2 { animation-delay: 0.45s; }
+    .j3 { animation-delay: 0.9s; }
+    .j4 { animation-delay: 1.35s; }
+    @keyframes fly {
+      0% { transform: translate(0, 0); opacity: 1; }
+      55% { opacity: 1; }
+      100% { transform: translate(96px, -20px); opacity: 0; }
+    }
+    .dust {
+      animation: puff 1.8s ease-out infinite;
+    }
+    .d2 { animation-delay: 0.6s; }
+    @keyframes puff {
+      0% { transform: translate(0, 0); opacity: 0; }
+      30% { opacity: 0.8; }
+      100% { transform: translate(60px, -26px); opacity: 0; }
+    }
+    .used {
+      animation: shrink 3.6s ease-in-out infinite alternate;
+    }
+    @keyframes shrink {
+      0% { width: 318px; }
+      100% { width: 132px; }
+    }
+    .freed {
+      animation: glow 3.6s ease-in-out infinite alternate;
+    }
+    @keyframes glow {
+      0% { opacity: 0.25; }
+      60% { opacity: 1; }
+      100% { opacity: 1; }
+    }
+  </style>
+
+  <rect width="900" height="240" rx="22" fill="#FAEEDA"/>
+
+  <g transform="translate(175, 34)">
+    <g class="broom">
+      <line x1="0" y1="0" x2="0" y2="82" stroke="#854F0B" stroke-width="13" stroke-linecap="round"/>
+      <rect x="-17" y="78" width="34" height="17" rx="8" fill="#D85A30"/>
+      <path d="M0 95 Q-38 128 -62 168" fill="none" stroke="#BA7517" stroke-width="9" stroke-linecap="round"/>
+      <path d="M0 95 Q-20 136 -32 174" fill="none" stroke="#EF9F27" stroke-width="9" stroke-linecap="round"/>
+      <path d="M0 95 Q0 138 -2 176" fill="none" stroke="#BA7517" stroke-width="9" stroke-linecap="round"/>
+      <path d="M0 95 Q20 136 30 174" fill="none" stroke="#EF9F27" stroke-width="9" stroke-linecap="round"/>
+      <path d="M0 95 Q38 128 60 168" fill="none" stroke="#BA7517" stroke-width="9" stroke-linecap="round"/>
+    </g>
+  </g>
+
+  <g class="junk">
+    <rect x="262" y="192" width="17" height="17" rx="4" fill="#1D9E75"/>
+  </g>
+  <g class="junk j2">
+    <rect x="296" y="196" width="14" height="14" rx="3" fill="#378ADD"/>
+  </g>
+  <g class="junk j3">
+    <rect x="330" y="191" width="18" height="18" rx="4" fill="#7F77DD"/>
+  </g>
+  <g class="junk j4">
+    <rect x="366" y="197" width="13" height="13" rx="3" fill="#D85A30"/>
+  </g>
+  <g class="dust">
+    <circle cx="255" cy="186" r="5" fill="#D3C6A8"/>
+  </g>
+  <g class="dust d2">
+    <circle cx="300" cy="182" r="4" fill="#D3C6A8"/>
+  </g>
+
+  <text x="470" y="92" font-size="52" font-weight="700" fill="#854F0B" font-family="ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif">Jharu</text>
+  <text x="472" y="126" font-size="18" fill="#993C1D" font-family="ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif">Storage insight and cleanup for developers</text>
+
+  <rect x="470" y="150" width="326" height="24" rx="9" fill="#F3E4C6" stroke="#E0D0AC" stroke-width="1.5"/>
+  <rect class="used" x="474" y="154" width="318" height="16" rx="6" fill="#EF9F27"/>
+  <text class="freed" x="470" y="205" font-size="16" font-weight="600" fill="#0F6E56" font-family="ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif">+96.4 GB reclaimed</text>
+</svg>
