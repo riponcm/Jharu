@@ -70,17 +70,14 @@ body {
   gap: 12px;
 }
 
-.brand-mark {
+.brand-logo {
   width: 38px;
   height: 38px;
   border-radius: 10px;
-  background: var(--accent);
-  color: #fff;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-weight: 600;
-  font-size: 18px;
+  background: #faeeda;
+  padding: 5px;
+  box-sizing: border-box;
+  flex: none;
 }
 
 .brand h1 {

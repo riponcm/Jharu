@@ -9,6 +9,7 @@ import Junk from "./views/Junk";
 import About from "./views/About";
 import { formatBytes } from "./format";
 import type { AccessStatus } from "./types";
+import logo from "./assets/jharu-mark.svg";
 import "./App.css";
 
 type View = "dev" | "deep" | "junk" | "browsers" | "uninstall" | "health" | "about";
@@ -43,7 +44,7 @@ function App() {
     <div className="shell">
       <aside className="sidebar">
         <div className="brand">
-          <span className="brand-mark">J</span>
+          <img src={logo} alt="" className="brand-logo" />
           <div>
             <h1>Jharu</h1>
             <p className="subtitle">Storage insight</p>
