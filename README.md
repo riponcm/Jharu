@@ -41,6 +41,12 @@ Lists installed applications with both their bundle size and the data they have 
 **Drive health.**
 Capacity, file system, and SMART status for every mounted drive, with usage gauges and early warnings as disks approach full.
 
+## Screenshots
+
+<div align="center">
+<img src="docs/screenshots/dev-clean.png" alt="Jharu Dev clean dashboard showing reclaimable space, storage breakdown, and cache findings" width="820" />
+</div>
+
 ## Safety model
 
 - Nothing is ever permanently deleted. Every clean action moves data to the Trash or Recycle Bin, where it can be restored.
@@ -95,3 +101,11 @@ Licensed under the [Apache License 2.0](LICENSE).
 ## Acknowledgements
 
 Jharu draws inspiration from the open source projects ClearDisk, Pearcleaner, PureMac, SquirrelDisk, and kondo.
+
+---
+
+<div align="center">
+
+A [Matily.org](https://matily.org) product. Built with Projectmem memory.
+
+</div>

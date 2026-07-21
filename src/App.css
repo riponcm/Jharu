@@ -886,6 +886,12 @@ button:disabled {
   font-size: 12px;
 }
 
+.brandline {
+  margin-top: 6px;
+  font-weight: 500;
+  color: var(--text-2);
+}
+
 .junk-item {
   display: grid;
   grid-template-columns: minmax(160px, 1fr) auto auto 84px auto auto;

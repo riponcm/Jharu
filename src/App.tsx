@@ -70,6 +70,7 @@ function App() {
             </div>
           )}
           <p className="footnote left">Everything goes to the Trash — nothing is permanently deleted.</p>
+          <p className="footnote left brandline">A Matily.org product</p>
         </div>
       </aside>
 
