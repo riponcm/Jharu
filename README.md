@@ -8,7 +8,8 @@
 
 Jharu finds and safely removes the gigabytes that development tools leave behind: machine learning model caches, package manager caches, Docker data, leftovers from uninstalled apps, and forgotten junk files — all from one professional dashboard.
 
-[![Version](https://img.shields.io/badge/version-0.1.0-EF9F27)](https://github.com/riponcm/Jharu/releases)
+[![GitHub stars](https://img.shields.io/github/stars/riponcm/Jharu?style=flat&color=EF9F27)](https://github.com/riponcm/Jharu/stargazers)
+[![Downloads](https://img.shields.io/github/downloads/riponcm/Jharu/total?color=1D9E75)](https://github.com/riponcm/Jharu/releases)
 [![License](https://img.shields.io/badge/license-Apache--2.0-blue)](LICENSE)
 [![Platform](https://img.shields.io/badge/platform-macOS%20%7C%20Windows-lightgrey)](#installation)
 [![Built with Tauri](https://img.shields.io/badge/built%20with-Tauri%202-24C8DB)](https://tauri.app)
