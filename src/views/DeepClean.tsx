@@ -98,6 +98,9 @@ export default function DeepClean({ onRecovered }: { onRecovered: (bytes: number
   const reveal = (path: string) =>
     invoke("reveal_path", { path }).catch((e) => setError(String(e)));
 
+  // Folders we could not read measure 0 B, so the treemap cannot draw them at
+  // all — they have to be named explicitly or they simply vanish.
+  const unreadable = entries.filter((e) => e.read_error);
   const maxSize = entries.length ? Math.max(...entries.map((e) => e.size_bytes)) : 1;
   const totalSize = entries.reduce((a, e) => a + e.size_bytes, 0);
 
@@ -184,6 +187,22 @@ export default function DeepClean({ onRecovered }: { onRecovered: (bytes: number
 
       {mode === "map" && entries.length > 0 && (
         <>
+          {unreadable.length > 0 && (
+            <div className="banner-info">
+              {unreadable.length} folder{unreadable.length === 1 ? "" : "s"} could not be read, so
+              {unreadable.length === 1 ? " it is" : " they are"} measured as 0 B and cannot be drawn
+              on the map: <strong>{unreadable.map((e) => e.name).join(", ")}</strong>.{" "}
+              {isWindows
+                ? "Run Jharu as an administrator to measure them."
+                : "Grant Full Disk Access in System Settings → Privacy and Security to measure them."}
+            </div>
+          )}
+          {scanning && (
+            <div className="map-scanning">
+              <div className="spinner sm" />
+              <span className="view-sub">Measuring — blocks appear as each folder finishes…</span>
+            </div>
+          )}
           <Treemap entries={entries} onOpen={navigate} />
           <p className="footnote">
             Each block is a folder, sized by what it holds. Click a block to go inside it.
@@ -208,6 +227,11 @@ export default function DeepClean({ onRecovered }: { onRecovered: (bytes: number
             </button>
             <span className={`badge kind-${e.kind}`}>{KIND_LABEL[e.kind]}</span>
             {e.protected && <span className="badge safety-risky">Protected</span>}
+            {e.read_error && (
+              <span className="badge safety-risky" title={e.read_error}>
+                Partly unreadable
+              </span>
+            )}
             <div className="deep-bar">
               <div
                 className={`deep-fill kindfill-${e.kind}`}

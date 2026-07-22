@@ -41,6 +41,7 @@ export interface DeepEntry {
   kind: "system" | "applications" | "user_data" | "app_data" | "dev" | "other";
   protected: boolean;
   hint: string;
+  read_error: string | null;
 }
 
 export interface BrowserItem {

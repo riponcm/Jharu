@@ -15,6 +15,9 @@ pub struct DeepEntry {
     /// Protected locations can be explored but never cleaned from the app.
     pub protected: bool,
     pub hint: String,
+    /// Present when the folder could not be fully read, so its size is a floor
+    /// rather than the truth.
+    pub read_error: Option<String>,
 }
 
 #[derive(Serialize, Clone)]
@@ -110,24 +113,49 @@ fn classify(path: &Path) -> (String, bool, String) {
     ("other".into(), false, "Unrecognized — explore to see what's inside.".into())
 }
 
-fn measure(path: &Path) -> (u64, u64) {
+/// Measures a folder, keeping the first read failure. A folder we lack rights
+/// to read otherwise measures 0 B, which on the map is indistinguishable from
+/// an empty one — the block simply never appears, and the disk looks emptier
+/// than it is.
+fn measure(path: &Path) -> (u64, u64, Option<String>) {
     if path.is_file() {
-        return (path.metadata().map(|m| m.len()).unwrap_or(0), 1);
+        return match path.metadata() {
+            Ok(m) => (m.len(), 1, None),
+            Err(e) => (0, 0, Some(e.to_string())),
+        };
     }
     let mut size = 0u64;
     let mut files = 0u64;
+    let mut read_error: Option<String> = None;
     let walker = WalkDir::new(path).skip_hidden(false).process_read_dir(|_, _, _, children| {
         children.retain(|c| c.as_ref().map(|e| !excluded(&e.path())).unwrap_or(true));
     });
-    for entry in walker.into_iter().flatten() {
-        if entry.file_type().is_file() {
-            if let Ok(meta) = entry.metadata() {
-                size += meta.len();
-                files += 1;
+    for result in walker {
+        match result {
+            Ok(entry) => {
+                // jwalk reports a directory it could not open as an Ok entry
+                // carrying read_children_error, not as an Err from the iterator.
+                if let Some(e) = &entry.read_children_error {
+                    read_error.get_or_insert_with(|| e.to_string());
+                }
+                if entry.file_type().is_file() {
+                    match entry.metadata() {
+                        Ok(meta) => {
+                            size += meta.len();
+                            files += 1;
+                        }
+                        Err(e) => {
+                            read_error.get_or_insert_with(|| e.to_string());
+                        }
+                    }
+                }
+            }
+            Err(e) => {
+                read_error.get_or_insert_with(|| e.to_string());
             }
         }
     }
-    (size, files)
+    (size, files, read_error)
 }
 
 #[tauri::command]
@@ -154,7 +182,7 @@ pub async fn deep_scan(
         // return empty. Entries still stream to the UI as each one finishes.
         let mut entries: Vec<DeepEntry> = Vec::with_capacity(children.len());
         for child in children {
-            let (size_bytes, file_count) = measure(&child);
+            let (size_bytes, file_count, read_error) = measure(&child);
             let (kind, protected, hint) = classify(&child);
             let entry = DeepEntry {
                 name: child
@@ -168,6 +196,7 @@ pub async fn deep_scan(
                 kind,
                 protected,
                 hint,
+                read_error,
             };
             let _ = app.emit(
                 "deep-entry",
