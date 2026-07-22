@@ -24,7 +24,7 @@ Jharu finds and safely removes the gigabytes that development tools leave behind
 
 macOS installer is universal (Apple Silicon and Intel). Windows installer is 64-bit.
 <br />
-Current version: **v0.1.0** · [All releases and release notes](https://github.com/riponcm/Jharu/releases)
+Current version: **v0.2.0** · [All releases and release notes](https://github.com/riponcm/Jharu/releases)
 
 </div>
 
@@ -43,28 +43,53 @@ Typical problems Jharu solves:
 ## Screenshots
 
 <div align="center">
-<img src="docs/screenshots/dev-clean.png" alt="Jharu dashboard showing reclaimable disk space, storage breakdown bar, and developer cache findings with safety ratings" width="820" />
+
+<img src="docs/screenshots/dev-clean.png" alt="Jharu dashboard showing reclaimable disk space, a storage breakdown bar, and developer cache findings with safety ratings" width="820" />
+
+<em>Dev clean — every known cache location, sized and rated</em>
+
+<br /><br />
+
+<img src="docs/screenshots/ml-models.png" alt="Jharu ML models tab listing individual models with badges showing which were downloaded but never loaded" width="820" />
+
+<em>ML models — 21.1 GB of the 21.7 GB here was downloaded and never loaded once</em>
+
+<br /><br />
+
+<img src="docs/screenshots/deep-clean-treemap.png" alt="Jharu deep clean treemap with folders sized by disk usage and a notice naming folders that could not be read" width="820" />
+
+<em>Deep clean — folders sized by what they hold, and an honest notice about what could not be read</em>
+
 </div>
 
 ## Features
 
+**ML models — keep what you use, remove what you never loaded.**
+Every downloaded model listed individually, across Hugging Face, Ollama, Whisper, PyTorch and Keras. Jharu distinguishes models you have actually loaded from models that were downloaded once and never opened since, so you can reclaim the second kind without touching the first. Ollama layers shared between models are kept, so removing one model never breaks another. No other cleaner makes this distinction.
+
 **Dev clean.**
 Scans 25+ known developer and machine learning cache locations — Hugging Face, Ollama, PyTorch, Whisper, LM Studio, conda, pip, uv, npm, yarn, pnpm, Cargo, Go modules, Gradle, Maven, NuGet, Homebrew, Xcode DerivedData, Docker, JetBrains, Playwright, Puppeteer — with per-item safety ratings and staleness detection.
 
+**Python environments.**
+Finds every virtualenv and conda environment, sizes the packages inside them, and shows what duplication costs across environments — the "torch is installed eleven times" problem, quantified.
+
 **Deep clean.**
-Full-disk analysis with progressive results. Every folder is classified as system, applications, your files, app data, or developer data. System locations are marked protected and can never be cleaned from the app.
+Full-disk analysis as a treemap or a list. Folders are sized by what they hold and classified as system, applications, your files, app data or developer data. Click a block to go inside it. System locations are protected and can never be cleaned from the app.
 
 **Junk files.**
-Finds non-cache junk: installers and archives in Downloads, old iPhone and iPad backups, logs and crash reports, mail attachment copies, and large files untouched for six months or more.
+Non-cache junk: installers and archives in Downloads, old device backups, logs and crash reports, mail attachment copies, large files untouched for six months, and on Windows the temp folders, Windows Update cache, Delivery Optimization files and crash dumps.
+
+**Desktop.**
+Screenshots and clutter on your desktop, filterable by type and age. Because these are your own files, archiving them to a folder is the default action rather than deleting.
 
 **Browsers.**
-Detects Chrome, Edge, Brave, Arc, Firefox, and Safari, and itemizes their caches per profile, separating safe-to-clear cache from data that deserves review.
+Detects Chrome, Edge, Brave, Arc, Firefox and Safari, and itemizes their caches per profile, separating safe-to-clear cache from data that deserves review.
 
 **Uninstaller.**
-Lists installed applications with both their bundle size and the data they have accumulated across the system. Removing an app also finds and removes its leftovers, with high-confidence matches preselected.
+Lists installed applications with both their own size and the data they have accumulated across the system. On Windows it reads the registry and runs each program's own uninstaller; on macOS it removes the bundle. Either way it then sweeps the leftovers, with high-confidence matches preselected.
 
 **Drive health.**
-Capacity, file system, and SMART status for every mounted drive, with usage gauges and early warnings as disks approach full.
+Capacity and SMART status per drive, plus a fill forecast built from a daily capacity reading that projects when a drive will run out of space. Wear level, temperature and power-on hours are shown when `smartctl` is available.
 
 **In-app updates.**
 Jharu checks GitHub releases for new versions and downloads and installs them from inside the app — signed, verified, and with a one-click restart.
@@ -87,7 +112,9 @@ Jharu checks GitHub releases for new versions and downloads and installs them fr
 - Nothing is ever permanently deleted. Every clean action moves data to the Trash or Recycle Bin, where it can be restored.
 - Every finding carries a safety rating: safe to clear, re-downloadable, or review first.
 - Operating system locations are protected and excluded from cleaning entirely.
-- Every destructive action requires an explicit in-app confirmation.
+- Every clean is confirmed by a dialog that states the actual consequence — a cache rebuilds itself, a model is re-downloaded, an environment must be recreated, your own files are gone for good.
+- **A location Jharu cannot read is reported, never hidden.** A folder needing elevated rights measures 0 B, which looks exactly like an empty one; Jharu flags these as partly unreadable instead of quietly leaving them out. A cleaner that hides what it cannot see is worse than one that admits it.
+- No registry cleaner, and Windows prefetch is listed but never cleaned. Both are widely marketed and neither does anything useful; prefetch is how Windows starts your apps quickly, and clearing it makes the next launches slower.
 
 ## Installation
 
@@ -143,15 +170,20 @@ Jharu's Uninstaller lists every installed app together with the data it has accu
 | Rules | Per-platform knowledge base of cache and data locations |
 | UI | React and TypeScript, Tauri 2 WebView |
 | Updates | `tauri-plugin-updater` with signed GitHub release artifacts |
-| Drive info | `sysinfo` with SMART status via platform tools |
+| Drive info | `sysinfo`, with SMART via `diskutil` and optional `smartctl` |
+| Windows | `winreg` for the uninstall keys; per-platform paths throughout |
+| Trend | A daily capacity reading stored locally, fitted by least squares |
 
 ## Roadmap
 
-- Windows uninstaller support via registry uninstall keys
 - Orphaned-data detection by comparing leftover folders against installed applications
-- Treemap visualization for deep clean
 - Duplicate file detection
+- Detailed drive health on Windows, which currently reports capacity only
 - Localized UI, starting with Bengali and Hindi
+
+Shipped in 0.2.0: per-model ML intelligence, Python environment analysis, the
+desktop cleaner, Windows uninstaller and junk rules, the deep clean treemap and
+the fill forecast. See the [changelog](CHANGELOG.md).
 
 ## Support Jharu
 

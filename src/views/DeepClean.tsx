@@ -98,9 +98,11 @@ export default function DeepClean({ onRecovered }: { onRecovered: (bytes: number
   const reveal = (path: string) =>
     invoke("reveal_path", { path }).catch((e) => setError(String(e)));
 
-  // Folders we could not read measure 0 B, so the treemap cannot draw them at
-  // all — they have to be named explicitly or they simply vanish.
+  // A folder we could not fully read reports a size that is only a floor. Where
+  // nothing at all could be read it measures 0 B, and a 0 B block cannot be
+  // drawn — those have to be named explicitly or they simply vanish.
   const unreadable = entries.filter((e) => e.read_error);
+  const undrawable = unreadable.filter((e) => e.size_bytes === 0);
   const maxSize = entries.length ? Math.max(...entries.map((e) => e.size_bytes)) : 1;
   const totalSize = entries.reduce((a, e) => a + e.size_bytes, 0);
 
@@ -189,12 +191,19 @@ export default function DeepClean({ onRecovered }: { onRecovered: (bytes: number
         <>
           {unreadable.length > 0 && (
             <div className="banner-info">
-              {unreadable.length} folder{unreadable.length === 1 ? "" : "s"} could not be read, so
-              {unreadable.length === 1 ? " it is" : " they are"} measured as 0 B and cannot be drawn
-              on the map: <strong>{unreadable.map((e) => e.name).join(", ")}</strong>.{" "}
+              {unreadable.length} folder{unreadable.length === 1 ? "" : "s"} could not be read in
+              full, so the size shown is a floor rather than the real total:{" "}
+              <strong>{unreadable.map((e) => e.name).join(", ")}</strong>.
+              {undrawable.length > 0 && (
+                <>
+                  {" "}
+                  {undrawable.length} of {unreadable.length === 1 ? "them" : "those"} measured 0 B
+                  and {undrawable.length === 1 ? "is" : "are"} not drawn on the map at all.
+                </>
+              )}{" "}
               {isWindows
-                ? "Run Jharu as an administrator to measure them."
-                : "Grant Full Disk Access in System Settings → Privacy and Security to measure them."}
+                ? "Run Jharu as an administrator to measure them properly."
+                : "Grant Full Disk Access in System Settings → Privacy and Security to measure them properly."}
             </div>
           )}
           {scanning && (

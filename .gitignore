@@ -22,3 +22,7 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Internal Windows testing notes — not part of the public project
+WINDOWS-BUILD.md
+WINDOWS-FIXES.md
