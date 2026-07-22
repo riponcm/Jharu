@@ -18,9 +18,9 @@ Jharu finds and safely removes the gigabytes that development tools leave behind
 
 ### Download
 
-[![Download for macOS](https://img.shields.io/badge/Download_for-macOS-111111?style=for-the-badge&logo=apple&logoColor=white)](https://github.com/riponcm/Jharu/releases/download/v0.1.0/Jharu_0.1.0_universal.dmg)
+[![Download for macOS](https://img.shields.io/badge/Download_for-macOS-111111?style=for-the-badge&logo=apple&logoColor=white)](https://github.com/riponcm/Jharu/releases/download/v0.2.0/Jharu_0.2.0_universal.dmg)
 &nbsp;
-[![Download for Windows](https://img.shields.io/badge/Download_for-Windows-0078D6?style=for-the-badge&logo=windows&logoColor=white)](https://github.com/riponcm/Jharu/releases/download/v0.1.0/Jharu_0.1.0_x64-setup.exe)
+[![Download for Windows](https://img.shields.io/badge/Download_for-Windows-0078D6?style=for-the-badge&logo=windows&logoColor=white)](https://github.com/riponcm/Jharu/releases/download/v0.2.0/Jharu_0.2.0_x64-setup.exe)
 
 macOS installer is universal (Apple Silicon and Intel). Windows installer is 64-bit.
 <br />
