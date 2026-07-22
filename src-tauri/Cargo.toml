@@ -1,6 +1,6 @@
 [package]
 name = "jharu"
-version = "0.1.0"
+version = "0.2.0"
 description = "Jharu — storage insight and cleanup for developers"
 authors = ["riponcm"]
 edition = "2021"
@@ -35,4 +35,7 @@ plist = "1"
 [target."cfg(any(target_os = \"macos\", windows, target_os = \"linux\"))".dependencies]
 tauri-plugin-updater = "2"
 tauri-plugin-process = "2"
+
+[target."cfg(windows)".dependencies]
+winreg = "0.52"
 

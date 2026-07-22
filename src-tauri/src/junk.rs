@@ -223,6 +223,110 @@ pub async fn junk_scan() -> Result<Vec<JunkGroup>, String> {
             }
         }
 
+        #[cfg(target_os = "windows")]
+        {
+            let local = dirs::data_local_dir().unwrap_or_else(|| home.join("AppData/Local"));
+            let windir = std::env::var("SystemRoot").unwrap_or_else(|_| "C:\\Windows".into());
+            let windir = std::path::PathBuf::from(windir);
+
+            let mut temp_items = vec![];
+            for (label, path) in [
+                ("Your temp folder (%TEMP%)", local.join("Temp")),
+                ("System temp folder", windir.join("Temp")),
+            ] {
+                if path.exists() {
+                    let size = dir_size(&path);
+                    if size > 1_000_000 {
+                        temp_items.push(JunkItem {
+                            label: label.into(),
+                            path: path.to_string_lossy().into_owned(),
+                            size_bytes: size,
+                            stale_days: stale_days(&path),
+                            safe: true,
+                        });
+                    }
+                }
+            }
+            push_group(
+                &mut groups,
+                "win-temp",
+                "Temporary files",
+                "Scratch files left behind by installers and applications. Windows never cleans these on its own.",
+                true,
+                temp_items,
+            );
+
+            let mut sys_items = vec![];
+            for (label, path, safe) in [
+                (
+                    "Windows Update downloads",
+                    windir.join("SoftwareDistribution/Download"),
+                    true,
+                ),
+                (
+                    "Delivery Optimization files",
+                    windir.join("ServiceProfiles/NetworkService/AppData/Local/Microsoft/Windows/DeliveryOptimization"),
+                    true,
+                ),
+                ("Crash dumps", local.join("CrashDumps"), true),
+                (
+                    "Error reporting archive",
+                    std::path::PathBuf::from("C:\\ProgramData\\Microsoft\\Windows\\WER"),
+                    true,
+                ),
+                (
+                    "Previous Windows installation (Windows.old)",
+                    std::path::PathBuf::from("C:\\Windows.old"),
+                    false,
+                ),
+            ] {
+                if path.exists() {
+                    let size = dir_size(&path);
+                    if size > 10_000_000 {
+                        sys_items.push(JunkItem {
+                            label: label.into(),
+                            path: path.to_string_lossy().into_owned(),
+                            size_bytes: size,
+                            stale_days: stale_days(&path),
+                            safe,
+                        });
+                    }
+                }
+            }
+            push_group(
+                &mut groups,
+                "win-system",
+                "Windows system leftovers",
+                "Update caches, crash dumps, and old installation files. Some need administrator rights to remove.",
+                true,
+                sys_items,
+            );
+
+            // Prefetch is listed for visibility only. Clearing it is a myth:
+            // Windows uses it to launch apps faster, it is self-limiting, and
+            // deleting it makes the next launches slower until it rebuilds.
+            let prefetch = windir.join("Prefetch");
+            if prefetch.exists() {
+                let size = dir_size(&prefetch);
+                if size > 0 {
+                    push_group(
+                        &mut groups,
+                        "win-prefetch",
+                        "Prefetch (informational)",
+                        "Windows uses these files to start your apps faster, and caps their size automatically. Deleting them frees very little and slows the next launches, so Jharu does not clean them.",
+                        false,
+                        vec![JunkItem {
+                            label: "Prefetch data".into(),
+                            path: prefetch.to_string_lossy().into_owned(),
+                            size_bytes: size,
+                            stale_days: None,
+                            safe: false,
+                        }],
+                    );
+                }
+            }
+        }
+
         push_group(
             &mut groups,
             "large",

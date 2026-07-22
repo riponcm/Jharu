@@ -149,35 +149,33 @@ pub async fn deep_scan(
             .collect();
         children.sort();
 
-        let entries: Vec<DeepEntry> = std::thread::scope(|s| {
-            let handles: Vec<_> = children
-                .into_iter()
-                .map(|child| {
-                    let app = app.clone();
-                    let token = token.clone();
-                    s.spawn(move || {
-                        let (size_bytes, file_count) = measure(&child);
-                        let (kind, protected, hint) = classify(&child);
-                        let entry = DeepEntry {
-                            name: child.file_name().map(|n| n.to_string_lossy().into_owned())
-                                .unwrap_or_else(|| child.to_string_lossy().into_owned()),
-                            path: child.to_string_lossy().into_owned(),
-                            is_dir: child.is_dir(),
-                            size_bytes,
-                            file_count,
-                            kind,
-                            protected,
-                            hint,
-                        };
-                        let _ = app.emit("deep-entry", DeepEvent { token: token.clone(), entry: entry.clone() });
-                        entry
-                    })
-                })
-                .collect();
-            handles.into_iter().filter_map(|h| h.join().ok()).collect()
-        });
+        // Measured one at a time: jwalk already parallelises each walk, and
+        // nesting a thread per child starves rayon's pool, which makes walks
+        // return empty. Entries still stream to the UI as each one finishes.
+        let mut entries: Vec<DeepEntry> = Vec::with_capacity(children.len());
+        for child in children {
+            let (size_bytes, file_count) = measure(&child);
+            let (kind, protected, hint) = classify(&child);
+            let entry = DeepEntry {
+                name: child
+                    .file_name()
+                    .map(|n| n.to_string_lossy().into_owned())
+                    .unwrap_or_else(|| child.to_string_lossy().into_owned()),
+                path: child.to_string_lossy().into_owned(),
+                is_dir: child.is_dir(),
+                size_bytes,
+                file_count,
+                kind,
+                protected,
+                hint,
+            };
+            let _ = app.emit(
+                "deep-entry",
+                DeepEvent { token: token.clone(), entry: entry.clone() },
+            );
+            entries.push(entry);
+        }
 
-        let mut entries = entries;
         entries.sort_by(|a, b| b.size_bytes.cmp(&a.size_bytes));
         Ok(entries)
     })

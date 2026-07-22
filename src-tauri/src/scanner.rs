@@ -18,6 +18,9 @@ pub struct Finding {
     pub stale_days: Option<u64>,
     /// Direct children with their sizes, largest first (for drill-down).
     pub children: Vec<ChildEntry>,
+    /// Present when this location could not be fully read, so the size shown
+    /// is incomplete rather than accurate.
+    pub read_error: Option<String>,
 }
 
 #[derive(Serialize)]
@@ -38,27 +41,44 @@ struct DirStats {
     size: u64,
     files: u64,
     newest_mtime: Option<SystemTime>,
+    /// Set when the directory exists but could not be fully read. Without this
+    /// an unreadable cache would silently vanish from the results instead of
+    /// telling the user that data is there but out of reach.
+    read_error: Option<String>,
 }
 
 fn measure_dir(path: &Path) -> DirStats {
     let mut size = 0u64;
     let mut files = 0u64;
     let mut newest: Option<SystemTime> = None;
+    let mut read_error: Option<String> = None;
 
-    for entry in WalkDir::new(path).skip_hidden(false).into_iter().flatten() {
+    for result in WalkDir::new(path).skip_hidden(false) {
+        let entry = match result {
+            Ok(e) => e,
+            Err(e) => {
+                read_error.get_or_insert_with(|| e.to_string());
+                continue;
+            }
+        };
         if entry.file_type().is_file() {
-            if let Ok(meta) = entry.metadata() {
-                size += meta.len();
-                files += 1;
-                if let Ok(modified) = meta.modified() {
-                    if newest.map_or(true, |n| modified > n) {
-                        newest = Some(modified);
+            match entry.metadata() {
+                Ok(meta) => {
+                    size += meta.len();
+                    files += 1;
+                    if let Ok(modified) = meta.modified() {
+                        if newest.map_or(true, |n| modified > n) {
+                            newest = Some(modified);
+                        }
                     }
+                }
+                Err(e) => {
+                    read_error.get_or_insert_with(|| e.to_string());
                 }
             }
         }
     }
-    DirStats { size, files, newest_mtime: newest }
+    DirStats { size, files, newest_mtime: newest, read_error }
 }
 
 fn shallow_size(path: &Path) -> u64 {
@@ -96,42 +116,45 @@ fn top_children(path: &Path, limit: usize) -> Vec<ChildEntry> {
 }
 
 pub fn scan() -> ScanResult {
-    let findings: Vec<Finding> = std::thread::scope(|s| {
-        let handles: Vec<_> = all_rules()
-            .into_iter()
-            .map(|rule| {
-                s.spawn(move || {
-                    let mut per_rule: Vec<Finding> = vec![];
-                    for path in rule.paths() {
-                        if !path.exists() {
-                            continue;
-                        }
-                        let stats = measure_dir(&path);
-                        if stats.size == 0 {
-                            continue;
-                        }
-                        let stale_days = stats.newest_mtime.and_then(|m| {
-                            SystemTime::now().duration_since(m).ok().map(|d| d.as_secs() / 86_400)
-                        });
-                        per_rule.push(Finding {
-                            rule_id: rule.id.to_string(),
-                            name: rule.name.to_string(),
-                            description: rule.description.to_string(),
-                            category: rule.category,
-                            safety: rule.safety,
-                            path: path.to_string_lossy().into_owned(),
-                            size_bytes: stats.size,
-                            file_count: stats.files,
-                            stale_days,
-                            children: top_children(&path, 8),
-                        });
-                    }
-                    per_rule
-                })
-            })
-            .collect();
-        handles.into_iter().flat_map(|h| h.join().unwrap_or_default()).collect()
-    });
+    // Rules are walked one at a time on purpose. jwalk already parallelises
+    // each walk across rayon's global pool, so spawning a thread per rule
+    // nests two layers of parallelism and starves that pool — walks then
+    // return empty and their findings silently disappear.
+    let findings: Vec<Finding> = {
+        let mut collected: Vec<Finding> = vec![];
+        for rule in all_rules() {
+            let mut per_rule: Vec<Finding> = vec![];
+            for path in rule.paths() {
+                if !path.exists() {
+                    continue;
+                }
+                let stats = measure_dir(&path);
+                // Only skip when the directory is genuinely empty. If it
+                // could not be read, report it so the user learns why.
+                if stats.size == 0 && stats.read_error.is_none() {
+                    continue;
+                }
+                let stale_days = stats.newest_mtime.and_then(|m| {
+                    SystemTime::now().duration_since(m).ok().map(|d| d.as_secs() / 86_400)
+                });
+                per_rule.push(Finding {
+                    rule_id: rule.id.to_string(),
+                    name: rule.name.to_string(),
+                    description: rule.description.to_string(),
+                    category: rule.category,
+                    safety: rule.safety,
+                    path: path.to_string_lossy().into_owned(),
+                    size_bytes: stats.size,
+                    file_count: stats.files,
+                    stale_days,
+                    children: top_children(&path, 8),
+                    read_error: stats.read_error,
+                });
+            }
+            collected.extend(per_rule);
+        }
+        collected
+    };
 
     let mut findings = findings;
     findings.sort_by(|a, b| b.size_bytes.cmp(&a.size_bytes));
@@ -152,11 +175,15 @@ mod tests {
         );
         for f in &result.findings {
             println!(
-                "{:>9.2} GB  {:8}  {}  ({} files)",
+                "{:>9.2} GB  {:8}  {}  ({} files){}",
                 f.size_bytes as f64 / 1e9,
                 format!("{:?}", f.safety),
                 f.name,
-                f.file_count
+                f.file_count,
+                f.read_error
+                    .as_deref()
+                    .map(|e| format!("  [READ ERROR: {e}]"))
+                    .unwrap_or_default()
             );
         }
         assert!(result.disk_total > 0);

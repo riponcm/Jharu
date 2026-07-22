@@ -2,8 +2,12 @@ mod access;
 mod apps;
 mod browsers;
 mod deep;
+mod desktop;
 mod health;
+mod history;
 mod junk;
+mod models;
+mod python;
 mod rules;
 mod scanner;
 
@@ -82,7 +86,12 @@ pub fn run() {
             junk::junk_scan,
             access::check_access,
             access::open_access_settings,
-            access::open_url
+            access::open_url,
+            models::model_scan,
+            python::python_scan,
+            desktop::desktop_scan,
+            desktop::move_to_folder,
+            apps::run_uninstaller
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

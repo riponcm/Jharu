@@ -59,6 +59,20 @@ export default function Uninstaller({ onRecovered }: { onRecovered: (bytes: numb
     setWorking(true);
     setConfirming(false);
     try {
+      // Windows programs must run their own uninstaller so they can
+      // unregister properly; leftovers are swept afterwards.
+      if (selected.uninstall_command) {
+        await invoke("run_uninstaller", { command: selected.uninstall_command });
+        const leftovers = [...checked].filter((p) => p !== selected.path);
+        if (leftovers.length) {
+          const swept = await invoke<CleanOutcome>("clean_paths", { paths: leftovers });
+          if (swept.errors.length) setError(swept.errors.join("; "));
+          onRecovered(swept.freed_bytes);
+        }
+        setSelected(null);
+        setLeftovers(null);
+        return;
+      }
       const outcome = await invoke<CleanOutcome>("clean_paths", { paths: [...checked] });
       if (outcome.errors.length) setError(outcome.errors.join("; "));
       onRecovered(outcome.freed_bytes);

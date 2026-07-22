@@ -12,6 +12,8 @@ pub struct AppInfo {
     pub bundle_id: Option<String>,
     pub version: Option<String>,
     pub last_used_days: Option<u64>,
+    /// Windows only: the command that runs the program's own uninstaller.
+    pub uninstall_command: Option<String>,
 }
 
 #[derive(Serialize)]
@@ -154,12 +156,119 @@ fn days_from_civil_now() -> Option<i64> {
     Some((secs / 86_400) as i64)
 }
 
+/// Windows records every installed program under the uninstall registry keys,
+/// including the command that removes it cleanly.
+#[cfg(target_os = "windows")]
+fn list_windows_apps(home: &Path) -> Vec<AppInfo> {
+    use winreg::enums::*;
+    use winreg::RegKey;
+
+    const ROOTS: [(isize, &str); 3] = [
+        (HKEY_LOCAL_MACHINE as isize, r"SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall"),
+        (HKEY_LOCAL_MACHINE as isize, r"SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall"),
+        (HKEY_CURRENT_USER as isize, r"SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall"),
+    ];
+
+    let index = build_index(home);
+    let mut apps: Vec<AppInfo> = vec![];
+    let mut seen: HashSet<String> = HashSet::new();
+
+    for (hive, path) in ROOTS {
+        let root = RegKey::predef(hive as HKEY);
+        let Ok(uninstall) = root.open_subkey_with_flags(path, KEY_READ) else { continue };
+
+        for key_name in uninstall.enum_keys().flatten() {
+            let Ok(key) = uninstall.open_subkey_with_flags(&key_name, KEY_READ) else { continue };
+
+            let name: String = match key.get_value("DisplayName") {
+                Ok(n) => n,
+                Err(_) => continue,
+            };
+            // Skip patches and updates, which are not user-uninstallable entries.
+            if key.get_value::<u32, _>("SystemComponent").unwrap_or(0) == 1
+                || key.get_value::<String, _>("ParentKeyName").is_ok()
+                || !seen.insert(name.to_lowercase())
+            {
+                continue;
+            }
+
+            let version: Option<String> = key.get_value("DisplayVersion").ok();
+            let uninstall_string: Option<String> = key
+                .get_value("QuietUninstallString")
+                .or_else(|_| key.get_value("UninstallString"))
+                .ok();
+            let install_location: Option<String> = key.get_value("InstallLocation").ok();
+
+            // EstimatedSize is in KB; fall back to measuring the install folder.
+            let estimated_kb: u32 = key.get_value("EstimatedSize").unwrap_or(0);
+            let size_bytes = if estimated_kb > 0 {
+                estimated_kb as u64 * 1024
+            } else {
+                install_location
+                    .as_deref()
+                    .map(|p| dir_size(Path::new(p)))
+                    .unwrap_or(0)
+            };
+
+            let norm = normalize(&name);
+            let data_bytes: u64 = index
+                .iter()
+                .filter(|e| matches(e, None, &norm).is_some())
+                .map(|e| dir_size(&e.path))
+                .sum();
+
+            apps.push(AppInfo {
+                name,
+                path: install_location.unwrap_or_default(),
+                size_bytes,
+                data_bytes,
+                bundle_id: None,
+                version,
+                last_used_days: None,
+                uninstall_command: uninstall_string,
+            });
+        }
+    }
+
+    apps.sort_by(|a, b| (b.size_bytes + b.data_bytes).cmp(&(a.size_bytes + a.data_bytes)));
+    apps
+}
+
+/// Runs the program's own uninstaller. Windows requires this rather than
+/// deleting files, so the program can unregister itself properly.
+#[tauri::command]
+pub async fn run_uninstaller(command: String) -> Result<(), String> {
+    #[cfg(target_os = "windows")]
+    {
+        tauri::async_runtime::spawn_blocking(move || {
+            std::process::Command::new("cmd")
+                .args(["/C", "start", "", "/wait"])
+                .raw_arg(&command)
+                .spawn()
+                .map(|_| ())
+                .map_err(|e| e.to_string())
+        })
+        .await
+        .map_err(|e| e.to_string())?
+    }
+    #[cfg(not(target_os = "windows"))]
+    {
+        let _ = command;
+        Err("Running an uninstaller command is only supported on Windows.".to_string())
+    }
+}
+
 #[tauri::command]
 pub async fn list_apps() -> Result<Vec<AppInfo>, String> {
     tauri::async_runtime::spawn_blocking(|| {
-        #[cfg(not(target_os = "macos"))]
+        #[cfg(target_os = "windows")]
         {
-            return Err("App listing is implemented on macOS first; Windows registry support is planned.".to_string());
+            let home = dirs::home_dir().ok_or("No home directory")?;
+            return Ok(list_windows_apps(&home));
+        }
+        #[cfg(all(unix, not(target_os = "macos")))]
+        {
+            return Err("App listing is available on macOS and Windows.".to_string());
         }
         #[cfg(target_os = "macos")]
         {
@@ -211,42 +320,31 @@ pub async fn list_apps() -> Result<Vec<AppInfo>, String> {
                 matched_per_app.push(hits);
             }
 
-            // Measure every unique matched data dir once, in parallel.
-            let sizes: HashMap<usize, u64> = std::thread::scope(|s| {
-                let handles: Vec<_> = unique_paths
-                    .iter()
-                    .map(|&i| {
-                        let path = index[i].path.clone();
-                        s.spawn(move || (i, dir_size(&path)))
-                    })
-                    .collect();
-                handles.into_iter().filter_map(|h| h.join().ok()).collect()
-            });
+            // Measure every unique matched data dir once. Sequential on
+            // purpose — see the note in scanner.rs about nesting threads
+            // around jwalk walks.
+            let sizes: HashMap<usize, u64> = unique_paths
+                .iter()
+                .map(|&i| (i, dir_size(&index[i].path)))
+                .collect();
 
-            // Bundle sizes + last-used in parallel.
-            let mut apps: Vec<AppInfo> = std::thread::scope(|s| {
-                let handles: Vec<_> = basics
-                    .iter()
-                    .zip(matched_per_app.iter())
-                    .map(|(b, hits)| {
-                        let data_bytes: u64 = hits.iter().filter_map(|i| sizes.get(i)).sum();
-                        let bundle = b.bundle.clone();
-                        let name = b.name.clone();
-                        let bundle_id = b.bundle_id.clone();
-                        let version = b.version.clone();
-                        s.spawn(move || AppInfo {
-                            size_bytes: dir_size(&bundle),
-                            last_used_days: last_used_days(&bundle),
-                            path: bundle.to_string_lossy().into_owned(),
-                            name,
-                            data_bytes,
-                            bundle_id,
-                            version,
-                        })
-                    })
-                    .collect();
-                handles.into_iter().filter_map(|h| h.join().ok()).collect()
-            });
+            let mut apps: Vec<AppInfo> = basics
+                .iter()
+                .zip(matched_per_app.iter())
+                .map(|(b, hits)| {
+                    let data_bytes: u64 = hits.iter().filter_map(|i| sizes.get(i)).sum();
+                    AppInfo {
+                        size_bytes: dir_size(&b.bundle),
+                        last_used_days: last_used_days(&b.bundle),
+                        path: b.bundle.to_string_lossy().into_owned(),
+                        name: b.name.clone(),
+                        data_bytes,
+                        bundle_id: b.bundle_id.clone(),
+                        version: b.version.clone(),
+                        uninstall_command: None,
+                    }
+                })
+                .collect();
 
             apps.sort_by(|a, b| (b.size_bytes + b.data_bytes).cmp(&(a.size_bytes + a.data_bytes)));
             Ok(apps)

@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import { formatBytes } from "../format";
-import type { CleanOutcome, JunkGroup } from "../types";
+import ConfirmClean from "../components/ConfirmClean";
+import type { CleanOutcome, JunkGroup, JunkItem } from "../types";
 
 export default function Junk({ onRecovered }: { onRecovered: (bytes: number) => void }) {
   const [groups, setGroups] = useState<JunkGroup[] | null>(null);
@@ -43,8 +44,44 @@ export default function Junk({ onRecovered }: { onRecovered: (bytes: number) => 
 
   const total = groups?.filter((g) => g.cleanable).reduce((a, g) => a + g.total_bytes, 0) ?? 0;
 
+  // A pending confirm is either a whole group's safe items, or one item.
+  const pendingGroup = groups?.find((g) => g.id === confirming);
+  const pendingItem: JunkItem | undefined = groups
+    ?.flatMap((g) => g.items)
+    .find((i) => i.path === confirming);
+  const pendingSafe = pendingGroup?.items.filter((i) => i.safe) ?? [];
+
   return (
     <>
+      {(pendingGroup || pendingItem) && (
+        <ConfirmClean
+          request={
+            pendingGroup
+              ? {
+                  kind: "userfile",
+                  title: `Clean ${pendingGroup.title}?`,
+                  items: pendingSafe.map((i) => i.label),
+                  bytes: pendingSafe.reduce((a, i) => a + i.size_bytes, 0),
+                  risky: false,
+                }
+              : {
+                  kind: "userfile",
+                  title: `Move ${pendingItem!.label} to the Trash?`,
+                  items: [pendingItem!.path],
+                  bytes: pendingItem!.size_bytes,
+                  risky: !pendingItem!.safe,
+                }
+          }
+          busy={cleaning === confirming}
+          onConfirm={() =>
+            pendingGroup
+              ? clean(pendingGroup.id, pendingSafe.map((i) => i.path))
+              : clean(pendingItem!.path, [pendingItem!.path])
+          }
+          onCancel={() => setConfirming(null)}
+        />
+      )}
+
       <div className="view-head">
         <div>
           <h2 className="view-title">Junk files</h2>
@@ -96,22 +133,13 @@ export default function Junk({ onRecovered }: { onRecovered: (bytes: number) => 
                 <p className="view-sub" style={{ marginTop: 2 }}>{g.note}</p>
               </div>
               {g.cleanable && safeItems.length > 0 && (
-                confirming === g.id ? (
-                  <span className="confirm">
-                    <button className="btn-danger" onClick={() => clean(g.id, safeItems.map((i) => i.path))}>
-                      Move {formatBytes(safeTotal)} to Trash
-                    </button>
-                    <button className="btn-ghost" onClick={() => setConfirming(null)}>Cancel</button>
-                  </span>
-                ) : (
-                  <button
-                    className="btn-clean"
-                    disabled={cleaning === g.id}
-                    onClick={() => setConfirming(g.id)}
-                  >
-                    {cleaning === g.id ? "Cleaning…" : `Clean safe items (${formatBytes(safeTotal)})`}
-                  </button>
-                )
+                <button
+                  className="btn-clean"
+                  disabled={cleaning === g.id}
+                  onClick={() => setConfirming(g.id)}
+                >
+                  {cleaning === g.id ? "Cleaning…" : `Clean safe items (${formatBytes(safeTotal)})`}
+                </button>
               )}
             </div>
             <div className="browser-items">
@@ -132,20 +160,13 @@ export default function Junk({ onRecovered }: { onRecovered: (bytes: number) => 
                     Show
                   </button>
                   {g.cleanable && (
-                    confirming === i.path ? (
-                      <span className="confirm">
-                        <button className="btn-danger sm" onClick={() => clean(i.path, [i.path])}>Trash</button>
-                        <button className="btn-ghost sm" onClick={() => setConfirming(null)}>Cancel</button>
-                      </span>
-                    ) : (
-                      <button
-                        className="btn-clean sm"
-                        disabled={cleaning === i.path}
-                        onClick={() => setConfirming(i.path)}
-                      >
-                        Clean
-                      </button>
-                    )
+                    <button
+                      className="btn-clean sm"
+                      disabled={cleaning === i.path}
+                      onClick={() => setConfirming(i.path)}
+                    >
+                      Clean
+                    </button>
                   )}
                 </div>
               ))}

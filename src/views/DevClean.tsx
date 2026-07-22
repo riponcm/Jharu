@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import { formatBytes } from "../format";
+import ConfirmClean from "../components/ConfirmClean";
 import type { CleanOutcome, Finding, ScanResult, Category, Safety } from "../types";
 
 const CATEGORY_LABEL: Record<Category, string> = {
@@ -20,7 +21,7 @@ export default function DevClean({ onRecovered }: { onRecovered: (bytes: number)
   const [scanning, setScanning] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [expanded, setExpanded] = useState<string | null>(null);
-  const [confirming, setConfirming] = useState<string | null>(null);
+  const [confirming, setConfirming] = useState<Finding | null>(null);
   const [cleaning, setCleaning] = useState<string | null>(null);
 
   const runScan = async () => {
@@ -56,6 +57,7 @@ export default function DevClean({ onRecovered }: { onRecovered: (bytes: number)
   const clean = async (finding: Finding) => {
     setCleaning(finding.path);
     setConfirming(null);
+    setExpanded(null);
     try {
       const outcome = await invoke<CleanOutcome>("clean_paths", { paths: [finding.path] });
       if (outcome.errors.length) setError(outcome.errors.join("; "));
@@ -86,6 +88,21 @@ export default function DevClean({ onRecovered }: { onRecovered: (bytes: number)
 
   return (
     <>
+      {confirming && (
+        <ConfirmClean
+          request={{
+            kind: confirming.category === "ml_models" ? "model" : "cache",
+            title: `Clean ${confirming.name}?`,
+            items: [confirming.path],
+            bytes: confirming.size_bytes,
+            risky: confirming.safety === "risky",
+          }}
+          busy={cleaning === confirming.path}
+          onConfirm={() => clean(confirming)}
+          onCancel={() => setConfirming(null)}
+        />
+      )}
+
       <div className="view-head">
         <div>
           <h2 className="view-title">Dev clean</h2>
@@ -182,6 +199,11 @@ export default function DevClean({ onRecovered }: { onRecovered: (bytes: number)
                         {f.stale_days != null && f.stale_days > 90 && (
                           <span className="badge stale">Unused {Math.round(f.stale_days / 30)} mo</span>
                         )}
+                        {f.read_error && (
+                          <span className="badge safety-risky" title={f.read_error}>
+                            Partly unreadable
+                          </span>
+                        )}
                       </div>
                       <code className="finding-path">{f.path}</code>
                     </div>
@@ -191,20 +213,13 @@ export default function DevClean({ onRecovered }: { onRecovered: (bytes: number)
                     </div>
                     <div className="finding-actions">
                       <button className="btn-ghost" onClick={() => reveal(f.path)}>Explore</button>
-                      {confirming === f.path ? (
-                        <span className="confirm">
-                          <button className="btn-danger" onClick={() => clean(f)}>Move to Trash</button>
-                          <button className="btn-ghost" onClick={() => setConfirming(null)}>Cancel</button>
-                        </span>
-                      ) : (
-                        <button
-                          className="btn-clean"
-                          disabled={cleaning === f.path}
-                          onClick={() => setConfirming(f.path)}
-                        >
-                          {cleaning === f.path ? "Cleaning…" : "Clean"}
-                        </button>
-                      )}
+                      <button
+                        className="btn-clean"
+                        disabled={cleaning === f.path}
+                        onClick={() => setConfirming(f)}
+                      >
+                        {cleaning === f.path ? "Cleaning…" : "Clean"}
+                      </button>
                     </div>
                   </div>
                   {expanded === f.path && (

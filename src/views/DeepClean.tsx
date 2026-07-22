@@ -2,6 +2,8 @@ import { useEffect, useRef, useState } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import { listen, type UnlistenFn } from "@tauri-apps/api/event";
 import { formatBytes } from "../format";
+import ConfirmClean from "../components/ConfirmClean";
+import Treemap from "../components/Treemap";
 import type { CleanOutcome, DeepEntry } from "../types";
 
 const KIND_LABEL: Record<DeepEntry["kind"], string> = {
@@ -20,7 +22,8 @@ export default function DeepClean({ onRecovered }: { onRecovered: (bytes: number
   const [entries, setEntries] = useState<DeepEntry[]>([]);
   const [scanning, setScanning] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [confirming, setConfirming] = useState<string | null>(null);
+  const [confirming, setConfirming] = useState<DeepEntry | null>(null);
+  const [mode, setMode] = useState<"map" | "list">("map");
   const cache = useRef(new Map<string, DeepEntry[]>());
   const activeToken = useRef("");
 
@@ -100,6 +103,20 @@ export default function DeepClean({ onRecovered }: { onRecovered: (bytes: number
 
   return (
     <>
+      {confirming && (
+        <ConfirmClean
+          request={{
+            kind: confirming.kind === "user_data" ? "userfile" : "cache",
+            title: `Move ${confirming.name} to the Trash?`,
+            items: [confirming.path],
+            bytes: confirming.size_bytes,
+            risky: confirming.kind === "user_data" || confirming.kind === "app_data",
+          }}
+          onConfirm={() => clean(confirming)}
+          onCancel={() => setConfirming(null)}
+        />
+      )}
+
       <div className="view-head">
         <div>
           <h2 className="view-title">Deep clean</h2>
@@ -134,6 +151,49 @@ export default function DeepClean({ onRecovered }: { onRecovered: (bytes: number
         </span>
       </div>
 
+      <div className="filter-row">
+        <div className="filter-tabs">
+          <button
+            className={`filter-tab ${mode === "map" ? "is-active" : ""}`}
+            onClick={() => setMode("map")}
+          >
+            Map
+          </button>
+          <button
+            className={`filter-tab ${mode === "list" ? "is-active" : ""}`}
+            onClick={() => setMode("list")}
+          >
+            List
+          </button>
+        </div>
+        <div className="legend" style={{ margin: 0 }}>
+          {[
+            ["kindfill-user_data", "Your files"],
+            ["kindfill-applications", "Apps"],
+            ["kindfill-app_data", "App data"],
+            ["kindfill-dev", "Dev / config"],
+            ["kindfill-system", "System"],
+          ].map(([cls, label]) => (
+            <span key={label} className="legend-item">
+              <i className={`dot ${cls}`} />
+              {label}
+            </span>
+          ))}
+        </div>
+      </div>
+
+      {mode === "map" && entries.length > 0 && (
+        <>
+          <Treemap entries={entries} onOpen={navigate} />
+          <p className="footnote">
+            Each block is a folder, sized by what it holds. Click a block to go inside it.
+            Blocks smaller than a fraction of a percent are left off the map — switch to List to see
+            everything.
+          </p>
+        </>
+      )}
+
+      {mode === "list" && (
       <div className="deep-list">
         {entries.map((e) => (
           <div key={e.path} className={`deep-row ${e.protected ? "is-protected" : ""}`}>
@@ -158,15 +218,9 @@ export default function DeepClean({ onRecovered }: { onRecovered: (bytes: number
             <span className="deep-files">{e.file_count.toLocaleString()} files</span>
             <div className="finding-actions">
               <button className="btn-ghost sm" onClick={() => reveal(e.path)}>Show</button>
-              {!e.protected &&
-                (confirming === e.path ? (
-                  <span className="confirm">
-                    <button className="btn-danger" onClick={() => clean(e)}>Trash</button>
-                    <button className="btn-ghost sm" onClick={() => setConfirming(null)}>Cancel</button>
-                  </span>
-                ) : (
-                  <button className="btn-clean sm" onClick={() => setConfirming(e.path)}>Clean</button>
-                ))}
+              {!e.protected && (
+                <button className="btn-clean sm" onClick={() => setConfirming(e)}>Clean</button>
+              )}
             </div>
           </div>
         ))}
@@ -177,6 +231,7 @@ export default function DeepClean({ onRecovered }: { onRecovered: (bytes: number
           </div>
         )}
       </div>
+      )}
 
       <p className="footnote">
         System locations are protected and can never be cleaned from Jharu. If some folders

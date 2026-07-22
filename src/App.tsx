@@ -6,18 +6,34 @@ import Browsers from "./views/Browsers";
 import Uninstaller from "./views/Uninstaller";
 import DriveHealth from "./views/DriveHealth";
 import Junk from "./views/Junk";
+import Models from "./views/Models";
+import Python from "./views/Python";
+import Desktop from "./views/Desktop";
 import About from "./views/About";
 import { formatBytes } from "./format";
 import type { AccessStatus } from "./types";
 import logo from "./assets/jharu-mark.svg";
 import "./App.css";
 
-type View = "dev" | "deep" | "junk" | "browsers" | "uninstall" | "health" | "about";
+type View =
+  | "dev"
+  | "models"
+  | "python"
+  | "deep"
+  | "junk"
+  | "desktop"
+  | "browsers"
+  | "uninstall"
+  | "health"
+  | "about";
 
 const NAV: { id: View; label: string; icon: string; sub: string }[] = [
   { id: "dev", label: "Dev clean", icon: "⌘", sub: "ML and dev caches" },
+  { id: "models", label: "ML models", icon: "◈", sub: "Per-model, used or not" },
+  { id: "python", label: "Python", icon: "◐", sub: "Envs and duplicates" },
   { id: "deep", label: "Deep clean", icon: "◉", sub: "Full-disk analysis" },
   { id: "junk", label: "Junk files", icon: "▤", sub: "Installers, backups, logs" },
+  { id: "desktop", label: "Desktop", icon: "▢", sub: "Screenshots and clutter" },
   { id: "browsers", label: "Browsers", icon: "◍", sub: "Web caches" },
   { id: "uninstall", label: "Uninstaller", icon: "✕", sub: "Apps and leftovers" },
   { id: "health", label: "Drive health", icon: "♥", sub: "Capacity and SMART" },
@@ -101,8 +117,11 @@ function App() {
         )}
 
         {view === "dev" && <DevClean onRecovered={addRecovered} />}
+        {view === "models" && <Models onRecovered={addRecovered} />}
+        {view === "python" && <Python onRecovered={addRecovered} />}
         {view === "deep" && <DeepClean onRecovered={addRecovered} />}
         {view === "junk" && <Junk onRecovered={addRecovered} />}
+        {view === "desktop" && <Desktop onRecovered={addRecovered} />}
         {view === "browsers" && <Browsers onRecovered={addRecovered} />}
         {view === "uninstall" && <Uninstaller onRecovered={addRecovered} />}
         {view === "health" && <DriveHealth />}

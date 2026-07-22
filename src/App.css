@@ -16,10 +16,16 @@
   --danger: #a32d2d;
   --danger-bg: #fcebeb;
 
-  --c-real: #b4b2a9;
-  --c-ml: #7f77dd;
-  --c-dev: #5dcaa5;
-  --c-app: #f0997b;
+  /* Category hues. Validated as a set for colour-vision deficiency and
+     contrast against both surfaces (all pairs, not just neighbours), so a
+     treemap can place any two blocks side by side safely. Purple replaced the
+     old lighter tint because it was indistinguishable from blue for deutan
+     viewers. Grey is deliberately outside the set: it means "structural". */
+  --c-real: #888780;
+  --c-ml: #534AB7;
+  --c-dev: #1D9E75;
+  --c-app: #D85A30;
+  --c-user: #378ADD;
   --c-free: #e7e5df;
 }
 
@@ -660,7 +666,7 @@ button:disabled {
 
 .kindfill-system { background: var(--c-real); }
 .kindfill-applications { background: var(--c-ml); }
-.kindfill-user_data { background: #378add; }
+.kindfill-user_data { background: var(--c-user); }
 .kindfill-app_data { background: var(--c-app); }
 .kindfill-dev { background: var(--c-dev); }
 .kindfill-other { background: var(--text-3); }
@@ -859,6 +865,89 @@ button:disabled {
   color: #ba7517;
 }
 
+.health-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 18px;
+  margin-bottom: 14px;
+}
+
+.health-top {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  flex-wrap: wrap;
+}
+
+.health-panels {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 18px;
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border);
+}
+
+.health-panel .section-title {
+  margin-bottom: 8px;
+}
+
+.forecast-note {
+  font-size: 12.5px;
+  color: var(--text-2);
+  margin-top: 4px;
+  line-height: 1.5;
+}
+
+.meters {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.meter-head {
+  display: flex;
+  justify-content: space-between;
+  font-size: 12.5px;
+  color: var(--text-2);
+}
+
+.meter-value {
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
+}
+
+.meter-track {
+  height: 7px;
+  background: var(--surface-2);
+  border-radius: 4px;
+  overflow: hidden;
+  margin-top: 4px;
+}
+
+.meter-fill {
+  height: 100%;
+  border-radius: 4px;
+}
+
+.meter-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 12.5px;
+  color: var(--text-2);
+}
+
+.meter-good {
+  color: var(--c-dev);
+  font-weight: 500;
+}
+
+.meter-bad {
+  color: var(--danger);
+  font-weight: 500;
+}
+
 .banner-access {
   display: flex;
   align-items: center;
@@ -881,6 +970,223 @@ button:disabled {
   font-weight: 400;
   color: var(--text-3);
   font-size: 12px;
+}
+
+.treemap {
+  display: block;
+  border-radius: 12px;
+  overflow: hidden;
+  background: var(--surface);
+  border: 1px solid var(--border);
+}
+
+.tm-cell {
+  cursor: pointer;
+}
+
+.tm-cell.is-protected {
+  cursor: default;
+}
+
+.tm-fill {
+  transition: opacity 0.12s ease;
+}
+
+.tm-cell:hover .tm-fill {
+  opacity: 0.82;
+}
+
+.tm-cell.is-protected .tm-fill {
+  opacity: 0.5;
+}
+
+.tm-name {
+  font-size: 13px;
+  font-weight: 600;
+  fill: #ffffff;
+  pointer-events: none;
+}
+
+.tm-size {
+  font-size: 12px;
+  fill: rgba(255, 255, 255, 0.88);
+  pointer-events: none;
+}
+
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.42);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  z-index: 50;
+}
+
+.modal {
+  background: var(--surface);
+  border-radius: 14px;
+  border: 1px solid var(--border);
+  padding: 22px 24px;
+  max-width: 470px;
+  width: 100%;
+  box-shadow: 0 18px 48px rgba(0, 0, 0, 0.22);
+}
+
+.modal-title {
+  font-size: 17px;
+  font-weight: 600;
+  margin-bottom: 10px;
+}
+
+.modal-body {
+  font-size: 13.5px;
+  color: var(--text-2);
+  line-height: 1.55;
+}
+
+.modal-warn {
+  margin-top: 10px;
+  font-size: 13px;
+  color: var(--danger);
+  background: var(--danger-bg);
+  border-radius: 8px;
+  padding: 9px 12px;
+  line-height: 1.5;
+}
+
+.modal-items {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  margin: 14px 0 0;
+  max-height: 120px;
+  overflow-y: auto;
+}
+
+.modal-item {
+  font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  font-size: 11.5px;
+  color: var(--text-3);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.modal-more {
+  font-size: 11.5px;
+  color: var(--text-3);
+}
+
+.modal-total {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border);
+  font-size: 13.5px;
+  color: var(--text-2);
+}
+
+.modal-total strong {
+  font-size: 16px;
+  color: var(--text);
+}
+
+.modal-foot {
+  margin-top: 8px;
+  font-size: 12px;
+  color: var(--text-3);
+}
+
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 18px;
+}
+
+.filter-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 12px;
+}
+
+.filter-tabs {
+  display: flex;
+  gap: 4px;
+  background: var(--surface-2);
+  padding: 3px;
+  border-radius: 9px;
+}
+
+.filter-tab {
+  border: none;
+  background: none;
+  padding: 5px 12px;
+  border-radius: 7px;
+  font-size: 12.5px;
+  color: var(--text-2);
+}
+
+.filter-tab.is-active {
+  background: var(--surface);
+  color: var(--text);
+  font-weight: 600;
+}
+
+.model-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 11px 16px;
+  cursor: pointer;
+}
+
+.model-row + .model-row {
+  border-top: 1px solid var(--border);
+}
+
+.model-main {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.model-meta {
+  font-size: 11.5px;
+  color: var(--text-3);
+}
+
+.dup-row {
+  display: grid;
+  grid-template-columns: minmax(120px, 200px) auto 1fr 110px 120px;
+  align-items: center;
+  gap: 12px;
+  padding: 9px 16px;
+  font-size: 12.5px;
+}
+
+.dup-row + .dup-row {
+  border-top: 1px solid var(--border);
+}
+
+.dup-waste {
+  text-align: right;
+  color: var(--danger);
+  font-variant-numeric: tabular-nums;
+}
+
+.inline-path {
+  font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  font-size: 11.5px;
 }
 
 .about-card {

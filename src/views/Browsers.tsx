@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import { formatBytes } from "../format";
+import ConfirmClean from "../components/ConfirmClean";
 import type { BrowserReport, CleanOutcome } from "../types";
 
 export default function Browsers({ onRecovered }: { onRecovered: (bytes: number) => void }) {
@@ -41,8 +42,25 @@ export default function Browsers({ onRecovered }: { onRecovered: (bytes: number)
     }
   };
 
+  const pending = reports?.find((b) => b.name === confirming);
+  const pendingSafe = pending?.items.filter((i) => i.safe) ?? [];
+
   return (
     <>
+      {pending && (
+        <ConfirmClean
+          request={{
+            kind: "cache",
+            title: `Clear ${pending.name} cache?`,
+            items: pendingSafe.map((i) => i.label),
+            bytes: pendingSafe.reduce((a, i) => a + i.size_bytes, 0),
+          }}
+          busy={cleaning === pending.name}
+          onConfirm={() => cleanPaths(pending.name, pendingSafe.map((i) => i.path))}
+          onCancel={() => setConfirming(null)}
+        />
+      )}
+
       <div className="view-head">
         <div>
           <h2 className="view-title">Browsers</h2>
@@ -84,26 +102,15 @@ export default function Browsers({ onRecovered }: { onRecovered: (bytes: number)
                   {formatBytes(b.total_bytes)} cache
                 </span>
               </div>
-              {safeItems.length > 0 &&
-                (confirming === b.name ? (
-                  <span className="confirm">
-                    <button
-                      className="btn-danger"
-                      onClick={() => cleanPaths(b.name, safeItems.map((i) => i.path))}
-                    >
-                      Move {formatBytes(safeTotal)} to Trash
-                    </button>
-                    <button className="btn-ghost" onClick={() => setConfirming(null)}>Cancel</button>
-                  </span>
-                ) : (
-                  <button
-                    className="btn-clean"
-                    disabled={cleaning === b.name}
-                    onClick={() => setConfirming(b.name)}
-                  >
-                    {cleaning === b.name ? "Cleaning…" : `Clean all safe (${formatBytes(safeTotal)})`}
-                  </button>
-                ))}
+              {safeItems.length > 0 && (
+                <button
+                  className="btn-clean"
+                  disabled={cleaning === b.name}
+                  onClick={() => setConfirming(b.name)}
+                >
+                  {cleaning === b.name ? "Cleaning…" : `Clean all safe (${formatBytes(safeTotal)})`}
+                </button>
+              )}
             </div>
             <div className="browser-items">
               {b.items.map((i) => (
