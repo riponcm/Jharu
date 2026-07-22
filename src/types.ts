@@ -73,6 +73,7 @@ export interface JunkItem {
   size_bytes: number;
   stale_days: number | null;
   safe: boolean;
+  read_error: string | null;
 }
 
 export interface JunkGroup {

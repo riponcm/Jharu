@@ -146,12 +146,19 @@ export default function Junk({ onRecovered }: { onRecovered: (bytes: number) => 
               {g.items.map((i) => (
                 <div key={i.path} className="junk-item">
                   <span className="child-name" title={i.path}>{i.label}</span>
-                  <span className={`badge ${i.safe ? "safety-safe" : "safety-caution"}`}>
-                    {i.safe ? "Safe" : "Review"}
+                  <span className="junk-badges">
+                    <span className={`badge ${i.safe ? "safety-safe" : "safety-caution"}`}>
+                      {i.safe ? "Safe" : "Review"}
+                    </span>
+                    {i.stale_days != null && i.stale_days > 30 && (
+                      <span className="badge stale">{Math.round(i.stale_days / 30)} mo old</span>
+                    )}
+                    {i.read_error && (
+                      <span className="badge safety-risky" title={i.read_error}>
+                        Partly unreadable
+                      </span>
+                    )}
                   </span>
-                  {i.stale_days != null && i.stale_days > 30 && (
-                    <span className="badge stale">{Math.round(i.stale_days / 30)} mo old</span>
-                  )}
                   <span className="child-size">{formatBytes(i.size_bytes)}</span>
                   <button
                     className="btn-ghost sm"

@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { invoke } from "@tauri-apps/api/core";
-import { formatBytes } from "../format";
+import { formatBytes, isWindows } from "../format";
 import type { DriveInfo, Forecast, HealthReport } from "../types";
 
 function Donut({ pct }: { pct: number }) {
@@ -276,7 +276,9 @@ export default function DriveHealth() {
                   <p className="footnote left" style={{ marginTop: 10 }}>
                     {report.smart_tool_available
                       ? "This drive does not expose wear or temperature to smartctl."
-                      : "Wear level, temperature, and power-on hours need smartmontools — install it with brew install smartmontools, then refresh."}
+                      : isWindows
+                        ? "Wear level, temperature, and power-on hours are not read on Windows yet — capacity and the fill forecast above are still accurate."
+                        : "Wear level, temperature, and power-on hours need smartmontools — install it with brew install smartmontools, then refresh."}
                   </p>
                 )}
               </div>

@@ -10,6 +10,10 @@ pub struct JunkItem {
     pub stale_days: Option<u64>,
     /// Safe items can be trashed with confidence; others need review.
     pub safe: bool,
+    /// Present when the location could not be fully read, so the size shown is
+    /// a floor rather than the real total. Without this a location we lack
+    /// rights to read looks identical to one that is genuinely empty.
+    pub read_error: Option<String>,
 }
 
 #[derive(Serialize)]
@@ -23,18 +27,48 @@ pub struct JunkGroup {
     pub items: Vec<JunkItem>,
 }
 
-fn dir_size(path: &Path) -> u64 {
+/// Measures a location, keeping hold of the first read failure. Locations like
+/// `C:\Windows\Temp` and the Prefetch folder need elevation, and swallowing the
+/// error there would report them as 0 B — indistinguishable from empty.
+fn dir_size_checked(path: &Path) -> (u64, Option<String>) {
     if path.is_file() {
-        return path.metadata().map(|m| m.len()).unwrap_or(0);
+        return match path.metadata() {
+            Ok(m) => (m.len(), None),
+            Err(e) => (0, Some(e.to_string())),
+        };
     }
-    jwalk::WalkDir::new(path)
-        .skip_hidden(false)
-        .into_iter()
-        .flatten()
-        .filter(|e| e.file_type().is_file())
-        .filter_map(|e| e.metadata().ok())
-        .map(|m| m.len())
-        .sum()
+    let mut size = 0u64;
+    let mut read_error: Option<String> = None;
+    for result in jwalk::WalkDir::new(path).skip_hidden(false) {
+        match result {
+            Ok(entry) => {
+                // jwalk hands back a directory it could not open as an Ok entry
+                // carrying read_children_error, not as an Err from the iterator,
+                // so checking only the Err arm misses every access denial.
+                if let Some(e) = &entry.read_children_error {
+                    read_error.get_or_insert_with(|| e.to_string());
+                }
+                if entry.file_type().is_file() {
+                    match entry.metadata() {
+                        Ok(meta) => size += meta.len(),
+                        Err(e) => {
+                            read_error.get_or_insert_with(|| e.to_string());
+                        }
+                    }
+                }
+            }
+            Err(e) => {
+                read_error.get_or_insert_with(|| e.to_string());
+            }
+        }
+    }
+    (size, read_error)
+}
+
+/// Only the macOS-specific scans call this; Windows uses dir_size_checked.
+#[allow(dead_code)]
+fn dir_size(path: &Path) -> u64 {
+    dir_size_checked(path).0
 }
 
 fn stale_days(path: &Path) -> Option<u64> {
@@ -80,6 +114,7 @@ fn scan_installers(downloads: &Path) -> (Vec<JunkItem>, Vec<JunkItem>) {
                 size_bytes: size,
                 stale_days: stale_days(&p),
                 safe: true,
+                read_error: None,
             };
             if INSTALLER_EXT.contains(&ext.as_str()) {
                 installers.push(item);
@@ -116,6 +151,7 @@ fn scan_large_stale(home: &Path) -> Vec<JunkItem> {
                     size_bytes: meta.len(),
                     stale_days: days,
                     safe: false,
+                    read_error: None,
                 });
             }
         }
@@ -164,6 +200,7 @@ pub async fn junk_scan() -> Result<Vec<JunkGroup>, String> {
                             size_bytes: dir_size(&p),
                             stale_days: stale_days(&p),
                             safe: false,
+                            read_error: None,
                         }
                     })
                     .filter(|i| i.size_bytes > 0)
@@ -189,6 +226,7 @@ pub async fn junk_scan() -> Result<Vec<JunkGroup>, String> {
                         size_bytes: size,
                         stale_days: None,
                         safe: true,
+                        read_error: None,
                     });
                 }
             }
@@ -217,6 +255,7 @@ pub async fn junk_scan() -> Result<Vec<JunkGroup>, String> {
                             size_bytes: size,
                             stale_days: None,
                             safe: true,
+                            read_error: None,
                         }],
                     );
                 }
@@ -235,14 +274,17 @@ pub async fn junk_scan() -> Result<Vec<JunkGroup>, String> {
                 ("System temp folder", windir.join("Temp")),
             ] {
                 if path.exists() {
-                    let size = dir_size(&path);
-                    if size > 1_000_000 {
+                    let (size, read_error) = dir_size_checked(&path);
+                    // Keep a location that we could not fully read even when it
+                    // measures small — the size is a floor, not the truth.
+                    if size > 1_000_000 || read_error.is_some() {
                         temp_items.push(JunkItem {
                             label: label.into(),
                             path: path.to_string_lossy().into_owned(),
                             size_bytes: size,
                             stale_days: stale_days(&path),
                             safe: true,
+                            read_error,
                         });
                     }
                 }
@@ -281,14 +323,15 @@ pub async fn junk_scan() -> Result<Vec<JunkGroup>, String> {
                 ),
             ] {
                 if path.exists() {
-                    let size = dir_size(&path);
-                    if size > 10_000_000 {
+                    let (size, read_error) = dir_size_checked(&path);
+                    if size > 10_000_000 || read_error.is_some() {
                         sys_items.push(JunkItem {
                             label: label.into(),
                             path: path.to_string_lossy().into_owned(),
                             size_bytes: size,
                             stale_days: stale_days(&path),
                             safe,
+                            read_error,
                         });
                     }
                 }
@@ -307,8 +350,10 @@ pub async fn junk_scan() -> Result<Vec<JunkGroup>, String> {
             // deleting it makes the next launches slower until it rebuilds.
             let prefetch = windir.join("Prefetch");
             if prefetch.exists() {
-                let size = dir_size(&prefetch);
-                if size > 0 {
+                // Prefetch is unreadable without elevation, so gating purely on
+                // size hid this group entirely on a normal user account.
+                let (size, read_error) = dir_size_checked(&prefetch);
+                if size > 0 || read_error.is_some() {
                     push_group(
                         &mut groups,
                         "win-prefetch",
@@ -321,6 +366,7 @@ pub async fn junk_scan() -> Result<Vec<JunkGroup>, String> {
                             size_bytes: size,
                             stale_days: None,
                             safe: false,
+                            read_error,
                         }],
                     );
                 }
@@ -354,6 +400,7 @@ pub async fn junk_scan() -> Result<Vec<JunkGroup>, String> {
                             size_bytes: size,
                             stale_days: None,
                             safe: false,
+                            read_error: None,
                         }],
                     );
                 }

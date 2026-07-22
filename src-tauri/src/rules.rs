@@ -73,8 +73,10 @@ impl Rule {
                 return vec![p(".cache/uv")];
             }
             "npm" => {
+                // npm caches under LocalAppData, not the roaming profile that
+                // dirs::data_dir() points at on Windows.
                 #[cfg(target_os = "windows")]
-                return vec![dirs::data_dir().map(|d| d.join("npm-cache")).unwrap_or_default()];
+                return vec![dirs::cache_dir().map(|c| c.join("npm-cache")).unwrap_or_default()];
                 #[cfg(not(target_os = "windows"))]
                 return vec![p(".npm/_cacache")];
             }

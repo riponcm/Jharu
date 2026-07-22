@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import { listen, type UnlistenFn } from "@tauri-apps/api/event";
-import { formatBytes } from "../format";
+import { formatBytes, isWindows } from "../format";
 import ConfirmClean from "../components/ConfirmClean";
 import Treemap from "../components/Treemap";
 import type { CleanOutcome, DeepEntry } from "../types";
@@ -234,8 +234,10 @@ export default function DeepClean({ onRecovered }: { onRecovered: (bytes: number
       )}
 
       <p className="footnote">
-        System locations are protected and can never be cleaned from Jharu. If some folders
-        show 0 B, grant Full Disk Access in System Settings → Privacy &amp; Security.
+        System locations are protected and can never be cleaned from Jharu.{" "}
+        {isWindows
+          ? "If some folders show 0 B, they need administrator rights to read — run Jharu as an administrator to measure them."
+          : "If some folders show 0 B, grant Full Disk Access in System Settings → Privacy & Security."}
       </p>
     </>
   );

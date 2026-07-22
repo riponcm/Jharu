@@ -161,7 +161,7 @@ fn days_from_civil_now() -> Option<i64> {
 #[cfg(target_os = "windows")]
 fn list_windows_apps(home: &Path) -> Vec<AppInfo> {
     use winreg::enums::*;
-    use winreg::RegKey;
+    use winreg::{RegKey, HKEY};
 
     const ROOTS: [(isize, &str); 3] = [
         (HKEY_LOCAL_MACHINE as isize, r"SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall"),
@@ -240,6 +240,8 @@ fn list_windows_apps(home: &Path) -> Vec<AppInfo> {
 pub async fn run_uninstaller(command: String) -> Result<(), String> {
     #[cfg(target_os = "windows")]
     {
+        use std::os::windows::process::CommandExt;
+
         tauri::async_runtime::spawn_blocking(move || {
             std::process::Command::new("cmd")
                 .args(["/C", "start", "", "/wait"])

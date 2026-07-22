@@ -61,6 +61,11 @@ fn measure_dir(path: &Path) -> DirStats {
                 continue;
             }
         };
+        // A directory that could not be opened arrives as an Ok entry carrying
+        // read_children_error; the Err arm above only catches walk failures.
+        if let Some(e) = &entry.read_children_error {
+            read_error.get_or_insert_with(|| e.to_string());
+        }
         if entry.file_type().is_file() {
             match entry.metadata() {
                 Ok(meta) => {
