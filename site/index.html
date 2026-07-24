@@ -1,0 +1,545 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Jharu — Free Disk Cleaner for Mac &amp; Windows | Clean AI &amp; Developer Clutter</title>
+<meta name="description" content="Jharu is a free, open-source disk cleaner for macOS and Windows that understands AI and developer clutter. Reclaim gigabytes from Hugging Face, Ollama, and PyTorch model caches, npm and pip caches, and app leftovers. A free CleanMyMac alternative — no telemetry, nothing permanently deleted.">
+<link rel="canonical" href="https://jharu.matily.org/">
+<meta name="theme-color" content="#FBF7F0" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#17130E" media="(prefers-color-scheme: dark)">
+<meta name="keywords" content="disk cleaner, free disk cleaner, mac disk cleaner, windows disk cleaner, AI cleaner, AI model cache cleaner, Hugging Face cache cleaner, Ollama cleaner, CleanMyMac alternative, free CleanMyMac alternative, developer disk cleaner, open source disk cleaner, disk space analyzer">
+
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Jharu">
+<meta property="og:title" content="Jharu — the disk cleaner that understands AI and developer clutter">
+<meta property="og:description" content="Free and open source. Reclaim gigabytes from ML model caches, package managers, and app leftovers on macOS and Windows.">
+<meta property="og:url" content="https://jharu.matily.org/">
+<meta property="og:image" content="https://jharu.matily.org/og-image.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Jharu — free disk cleaner for AI &amp; developer clutter">
+<meta name="twitter:description" content="Reclaim gigabytes from model caches, package managers, and dead apps. Free, open source, macOS &amp; Windows.">
+<meta name="twitter:image" content="https://jharu.matily.org/og-image.png">
+
+<link rel="icon" href="favicon.ico" sizes="any">
+<link rel="icon" href="jharu-mark.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "SoftwareApplication",
+  "name": "Jharu",
+  "operatingSystem": "macOS, Windows",
+  "applicationCategory": "UtilitiesApplication",
+  "applicationSubCategory": "Disk Cleaner",
+  "description": "A free, open-source disk cleaner for macOS and Windows that understands AI and developer clutter — machine-learning model caches, package-manager caches, virtual environments, and app leftovers.",
+  "url": "https://jharu.matily.org/",
+  "downloadUrl": "https://github.com/riponcm/Jharu/releases/latest",
+  "softwareVersion": "0.2.0",
+  "license": "https://www.apache.org/licenses/LICENSE-2.0",
+  "isAccessibleForFree": true,
+  "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
+  "author": { "@type": "Organization", "name": "Matily", "url": "https://matily.org" },
+  "featureList": [
+    "Per-model machine-learning cache cleanup with used-versus-downloaded detection",
+    "Hugging Face, Ollama, PyTorch and Whisper model cache cleaning",
+    "Developer cache cleanup for npm, pip, conda, Cargo and more",
+    "Full-disk treemap visualization",
+    "Clean app uninstaller that removes leftovers",
+    "Python virtual environment and duplicate analysis",
+    "Everything moves to the Trash or Recycle Bin, never permanently deleted"
+  ]
+}
+</script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    { "@type": "Question", "name": "Is Jharu a free disk cleaner?", "acceptedAnswer": { "@type": "Answer", "text": "Yes. Jharu is completely free and open source under the Apache 2.0 license, with no subscription, paid tier, ads, or telemetry. It runs on both macOS and Windows." } },
+    { "@type": "Question", "name": "Is Jharu an AI cleaner?", "acceptedAnswer": { "@type": "Answer", "text": "Jharu does not use AI to decide what to delete; it is precise and rule-based. But it is the best cleaner for AI clutter: it understands the model caches that tools like Hugging Face, Ollama, PyTorch and Whisper leave behind and tells you which models you actually loaded versus which you only downloaded." } },
+    { "@type": "Question", "name": "How do I clear the Hugging Face or Ollama model cache?", "acceptedAnswer": { "@type": "Answer", "text": "Open Jharu's ML models tab, which lists every downloaded model with its size and whether you have loaded it since downloading. Select the ones you no longer need and move them to the Trash; they re-download automatically the next time your code requests them. Shared Ollama layers are preserved so removing one model never breaks another." } },
+    { "@type": "Question", "name": "Is Jharu safe? Will it delete something important?", "acceptedAnswer": { "@type": "Answer", "text": "Nothing is ever permanently deleted. Every clean moves data to the macOS Trash or Windows Recycle Bin, where it can be restored. A dialog states the real consequence before each action, and operating-system locations are protected and can never be cleaned." } },
+    { "@type": "Question", "name": "Is Jharu a good free alternative to CleanMyMac or CCleaner?", "acceptedAnswer": { "@type": "Answer", "text": "Yes, especially for developers and machine-learning practitioners. It is free and open source with no upsell, and its focus is deeper: the model caches, package caches, virtual environments and app leftovers that general-purpose cleaners do not understand." } },
+    { "@type": "Question", "name": "Does Jharu work on both Mac and Windows?", "acceptedAnswer": { "@type": "Answer", "text": "Yes. The macOS build is universal for Apple Silicon and Intel in one download, and the Windows build is a standard 64-bit installer. Jharu keeps itself up to date in-app on both platforms." } }
+  ]
+}
+</script>
+</head>
+<body>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400..800&family=IBM+Plex+Sans:wght@400;450;500;600&family=JetBrains+Mono:wght@400;500&display=swap');
+
+:root {
+  --paper: #FBF7F0;
+  --paper-2: #F4EDE0;
+  --card: #FFFFFF;
+  --ink: #211A12;
+  --ink-2: #5E5346;
+  --ink-3: #8B7E6B;
+  --line: #E7DDCB;
+  --accent: #D85A30;
+  --accent-ink: #A8410F;
+  --amber: #EF9F27;
+  --brown: #854F0B;
+  --blue: #2F73B8;
+  --teal: #158A63;
+  --violet: #534AB7;
+  --radius: 14px;
+  --shadow: 0 1px 2px rgba(45,30,10,.05), 0 12px 32px -12px rgba(45,30,10,.14);
+  --maxw: 1080px;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --paper: #17130E;
+    --paper-2: #1F1A13;
+    --card: #211B14;
+    --ink: #F5EEE1;
+    --ink-2: #C3B49C;
+    --ink-3: #8E8067;
+    --line: #33291D;
+    --accent: #F0754A;
+    --accent-ink: #F6A886;
+    --amber: #F0A836;
+    --brown: #D9A25A;
+    --blue: #6FA8DE;
+    --teal: #4FC79A;
+    --violet: #A79EF0;
+    --shadow: 0 1px 2px rgba(0,0,0,.3), 0 16px 40px -16px rgba(0,0,0,.55);
+  }
+}
+:root[data-theme="light"] {
+  --paper: #FBF7F0; --paper-2: #F4EDE0; --card: #FFFFFF; --ink: #211A12; --ink-2: #5E5346;
+  --ink-3: #8B7E6B; --line: #E7DDCB; --accent: #D85A30; --accent-ink: #A8410F; --amber: #EF9F27;
+  --brown: #854F0B; --blue: #2F73B8; --teal: #158A63; --violet: #534AB7;
+  --shadow: 0 1px 2px rgba(45,30,10,.05), 0 12px 32px -12px rgba(45,30,10,.14);
+}
+:root[data-theme="dark"] {
+  --paper: #17130E; --paper-2: #1F1A13; --card: #211B14; --ink: #F5EEE1; --ink-2: #C3B49C;
+  --ink-3: #8E8067; --line: #33291D; --accent: #F0754A; --accent-ink: #F6A886; --amber: #F0A836;
+  --brown: #D9A25A; --blue: #6FA8DE; --teal: #4FC79A; --violet: #A79EF0;
+  --shadow: 0 1px 2px rgba(0,0,0,.3), 0 16px 40px -16px rgba(0,0,0,.55);
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body { background: var(--paper); color: var(--ink); font-family: "IBM Plex Sans", system-ui, sans-serif; font-size: 17px; line-height: 1.6; -webkit-font-smoothing: antialiased; }
+.jw { max-width: var(--maxw); margin: 0 auto; padding: 0 24px; }
+h1, h2, h3 { font-family: "Bricolage Grotesque", system-ui, sans-serif; font-weight: 600; line-height: 1.05; letter-spacing: -0.02em; text-wrap: balance; color: var(--ink); }
+a { color: inherit; text-decoration: none; }
+.mono { font-family: "JetBrains Mono", monospace; font-variant-numeric: tabular-nums; }
+.eyebrow { font-family: "JetBrains Mono", monospace; font-size: 12.5px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--accent-ink); font-weight: 500; }
+
+/* header */
+.hd { position: sticky; top: 0; z-index: 50; background: color-mix(in srgb, var(--paper) 86%, transparent); backdrop-filter: blur(12px); border-bottom: 1px solid var(--line); }
+.hd-in { display: flex; align-items: center; justify-content: space-between; height: 66px; }
+.brand { display: flex; align-items: center; gap: 11px; font-family: "Bricolage Grotesque", sans-serif; font-weight: 600; font-size: 20px; letter-spacing: -0.02em; }
+.brand .logo { width: 38px; height: 38px; border-radius: 10px; background: #FAEEDA; display: grid; place-items: center; flex: none; box-shadow: inset 0 0 0 1px rgba(133,79,11,.14); }
+.brand .logo svg { width: 27px; height: 27px; display: block; }
+.hd-nav { display: flex; align-items: center; gap: 26px; }
+.hd-nav a { font-size: 14.5px; color: var(--ink-2); font-weight: 450; }
+.hd-nav a:hover { color: var(--ink); }
+.hd-cta { display: inline-flex; align-items: center; gap: 7px; background: var(--ink); color: var(--paper); padding: 8px 15px; border-radius: 9px; font-size: 14px; font-weight: 500; }
+.hd-cta:hover { background: var(--accent); color: #fff; }
+@media (max-width: 760px) { .hd-nav a:not(.hd-cta) { display: none; } }
+
+/* hero */
+.hero { padding: 76px 0 56px; position: relative; overflow: hidden; }
+.hero-grid { display: grid; grid-template-columns: 1.05fr 0.95fr; gap: 56px; align-items: center; }
+@media (max-width: 920px) { .hero-grid { grid-template-columns: 1fr; gap: 40px; } }
+.hero h1 { font-size: clamp(38px, 6vw, 62px); font-weight: 700; }
+.hero h1 .swept { color: var(--accent); position: relative; white-space: nowrap; }
+.hero-sub { font-size: clamp(18px, 2.2vw, 21px); color: var(--ink-2); margin-top: 22px; max-width: 30ch; }
+.hero-cta { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 32px; }
+.btn { display: inline-flex; align-items: center; gap: 9px; padding: 13px 20px; border-radius: 11px; font-weight: 500; font-size: 15.5px; border: 1px solid transparent; transition: transform .12s ease; }
+.btn svg { width: 18px; height: 18px; }
+.btn:active { transform: translateY(1px); }
+.btn-mac { background: var(--ink); color: var(--paper); }
+.btn-mac:hover { background: var(--accent); color: #fff; }
+.btn-win { background: var(--card); color: var(--ink); border-color: var(--line); }
+.btn-win:hover { border-color: var(--accent); color: var(--accent-ink); }
+.hero-note { margin-top: 16px; font-size: 13.5px; color: var(--ink-3); display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.hero-note .dot { width: 5px; height: 5px; border-radius: 50%; background: var(--teal); }
+
+/* scan receipt */
+.receipt { background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--shadow); overflow: hidden; }
+.receipt-top { display: flex; align-items: center; justify-content: space-between; padding: 13px 16px; border-bottom: 1px solid var(--line); background: var(--paper-2); }
+.receipt-dots { display: flex; gap: 6px; }
+.receipt-dots i { width: 11px; height: 11px; border-radius: 50%; display: block; }
+.receipt-title { font-family: "JetBrains Mono", monospace; font-size: 12px; color: var(--ink-3); }
+.receipt-body { padding: 18px 18px 8px; }
+.rrow { display: grid; grid-template-columns: 1fr auto; grid-template-rows: auto auto; column-gap: 16px; row-gap: 3px; align-items: center; padding: 10px 0; border-bottom: 1px dashed var(--line); }
+.rrow:last-child { border-bottom: 0; }
+.rname { grid-column: 1; grid-row: 1; font-family: "JetBrains Mono", monospace; font-size: 13.5px; font-weight: 500; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.rpath { grid-column: 1; grid-row: 2; font-family: "JetBrains Mono", monospace; font-size: 11.5px; color: var(--ink-3); }
+.rsize { grid-column: 2; grid-row: 1 / span 2; align-self: center; text-align: right; font-family: "JetBrains Mono", monospace; font-size: 15px; font-weight: 500; }
+.tag { font-family: "JetBrains Mono", monospace; font-size: 10.5px; padding: 2px 7px; border-radius: 5px; letter-spacing: .02em; white-space: nowrap; }
+.tag-ml { background: color-mix(in srgb, var(--violet) 16%, transparent); color: var(--violet); }
+.tag-safe { background: color-mix(in srgb, var(--teal) 18%, transparent); color: var(--teal); }
+.tag-unused { background: color-mix(in srgb, var(--amber) 20%, transparent); color: var(--brown); }
+.receipt-foot { display: flex; align-items: center; justify-content: space-between; padding: 15px 18px; border-top: 1px solid var(--line); background: var(--paper-2); }
+.receipt-foot .lbl { font-size: 13px; color: var(--ink-2); }
+.receipt-foot .amt { font-family: "Bricolage Grotesque", sans-serif; font-size: 26px; font-weight: 700; color: var(--accent); }
+
+/* logos strip */
+.strip { border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); background: var(--paper-2); }
+.strip-in { display: flex; align-items: center; gap: 14px 30px; flex-wrap: wrap; justify-content: center; padding: 20px 24px; }
+.strip .lbl { font-family: "JetBrains Mono", monospace; font-size: 11.5px; letter-spacing: .12em; text-transform: uppercase; color: var(--ink-3); }
+.strip .name { font-family: "JetBrains Mono", monospace; font-size: 14px; color: var(--ink-2); font-weight: 500; }
+
+/* sections */
+section { padding: 84px 0; }
+.sec-head { max-width: 62ch; margin-bottom: 44px; }
+.sec-head h2 { font-size: clamp(28px, 4vw, 40px); margin-top: 12px; }
+.sec-head p { color: var(--ink-2); font-size: 18px; margin-top: 16px; }
+
+/* what it eats — bars */
+.eat { display: grid; grid-template-columns: 1fr; gap: 12px; }
+.bar { display: grid; grid-template-columns: 200px 1fr auto; gap: 16px; align-items: center; padding: 4px 0; }
+@media (max-width: 640px) { .bar { grid-template-columns: 130px 1fr auto; gap: 10px; } }
+.bar .who { font-size: 15px; font-weight: 500; }
+.bar .who small { display: block; font-family: "JetBrains Mono", monospace; font-size: 11px; color: var(--ink-3); font-weight: 400; }
+.bar .track { height: 26px; background: var(--paper-2); border-radius: 7px; overflow: hidden; }
+.bar .fill { height: 100%; border-radius: 7px; }
+.bar .amt { font-family: "JetBrains Mono", monospace; font-size: 14.5px; font-weight: 500; min-width: 62px; text-align: right; }
+
+/* feature cards */
+.cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; }
+@media (max-width: 900px) { .cards { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 600px) { .cards { grid-template-columns: 1fr; } }
+.card-f { background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); padding: 24px; }
+.card-f .ic { width: 40px; height: 40px; border-radius: 10px; display: grid; place-items: center; margin-bottom: 16px; }
+.card-f .ic svg { width: 21px; height: 21px; }
+.card-f h3 { font-size: 18.5px; margin-bottom: 8px; }
+.card-f p { font-size: 15px; color: var(--ink-2); line-height: 1.55; }
+.card-f p code { font-family: "JetBrains Mono", monospace; font-size: 12.5px; background: var(--paper-2); padding: 1px 5px; border-radius: 4px; color: var(--accent-ink); }
+
+/* comparison */
+.cmp { background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); overflow: hidden; box-shadow: var(--shadow); }
+.cmp table { width: 100%; border-collapse: collapse; }
+.cmp th, .cmp td { text-align: left; padding: 16px 20px; border-bottom: 1px solid var(--line); font-size: 15px; }
+.cmp thead th { font-family: "JetBrains Mono", monospace; font-size: 12px; letter-spacing: .06em; text-transform: uppercase; color: var(--ink-3); font-weight: 500; }
+.cmp thead th.us { color: var(--accent); }
+.cmp tbody td:first-child { color: var(--ink-2); }
+.cmp .yes { color: var(--teal); font-weight: 600; }
+.cmp .no { color: var(--ink-3); }
+.cmp col.us-col { background: color-mix(in srgb, var(--accent) 6%, transparent); }
+.cmp td.us { font-weight: 500; }
+.cmp-wrap { overflow-x: auto; }
+
+/* faq */
+.faq { display: grid; gap: 12px; max-width: 800px; }
+.faq details { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 4px 20px; }
+.faq summary { cursor: pointer; list-style: none; padding: 16px 0; font-family: "Bricolage Grotesque", sans-serif; font-weight: 600; font-size: 17.5px; display: flex; justify-content: space-between; align-items: center; gap: 16px; }
+.faq summary::-webkit-details-marker { display: none; }
+.faq summary::after { content: "+"; font-family: "JetBrains Mono", monospace; font-size: 22px; color: var(--accent); font-weight: 400; transition: transform .2s ease; }
+.faq details[open] summary::after { transform: rotate(45deg); }
+.faq .ans { padding: 0 0 18px; color: var(--ink-2); font-size: 15.5px; line-height: 1.6; }
+.faq .ans code { font-family: "JetBrains Mono", monospace; font-size: 13px; background: var(--paper-2); padding: 1px 5px; border-radius: 4px; }
+
+/* cta band */
+.band { background: var(--ink); color: var(--paper); border-radius: 20px; padding: 56px 40px; text-align: center; position: relative; overflow: hidden; }
+:root[data-theme="dark"] .band, :root:not([data-theme="light"]) .band { border: 1px solid var(--line); }
+.band h2 { color: var(--paper); font-size: clamp(28px, 4vw, 42px); }
+.band p { color: color-mix(in srgb, var(--paper) 72%, transparent); font-size: 18px; margin: 16px auto 30px; max-width: 46ch; }
+.band .hero-cta { justify-content: center; }
+.band .btn-win { background: transparent; color: var(--paper); border-color: color-mix(in srgb, var(--paper) 30%, transparent); }
+.band .btn-win:hover { border-color: var(--paper); color: #fff; }
+.band .amt-line { font-family: "JetBrains Mono", monospace; font-size: 13px; color: color-mix(in srgb, var(--paper) 60%, transparent); margin-top: 22px; }
+
+/* footer */
+.ft { border-top: 1px solid var(--line); padding: 44px 0 56px; }
+.ft-in { display: flex; justify-content: space-between; gap: 24px; flex-wrap: wrap; align-items: flex-start; }
+.ft .brand { font-size: 18px; }
+.ft-links { display: flex; gap: 40px; flex-wrap: wrap; }
+.ft-col h4 { font-family: "JetBrains Mono", monospace; font-size: 11.5px; letter-spacing: .1em; text-transform: uppercase; color: var(--ink-3); margin-bottom: 12px; font-weight: 500; }
+.ft-col a { display: block; font-size: 14.5px; color: var(--ink-2); padding: 4px 0; }
+.ft-col a:hover { color: var(--accent-ink); }
+.ft-legal { margin-top: 36px; padding-top: 20px; border-top: 1px solid var(--line); display: flex; justify-content: space-between; gap: 16px; flex-wrap: wrap; font-size: 13px; color: var(--ink-3); }
+.ft-legal a { color: var(--accent-ink); }
+
+.reveal { opacity: 0; transform: translateY(16px); transition: opacity .6s ease, transform .6s ease; }
+.reveal.in { opacity: 1; transform: none; }
+@media (prefers-reduced-motion: reduce) { .reveal { opacity: 1; transform: none; transition: none; } html { scroll-behavior: auto; } }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; border-radius: 4px; }
+</style>
+
+<header class="hd">
+  <div class="jw hd-in">
+    <a class="brand" href="#top" aria-label="Jharu home">
+      <span class="logo" aria-hidden="true">
+        <svg viewBox="0 0 1024 1024"><g stroke-linecap="round"><line x1="512" y1="150" x2="512" y2="430" stroke="#854F0B" stroke-width="52"/><rect x="430" y="410" width="164" height="78" rx="34" fill="#D85A30"/><path d="M512 488 Q338 632 226 838" fill="none" stroke="#BA7517" stroke-width="40"/><path d="M512 488 Q404 676 336 866" fill="none" stroke="#EF9F27" stroke-width="40"/><path d="M512 488 Q480 690 452 880" fill="none" stroke="#BA7517" stroke-width="40"/><path d="M512 488 Q544 690 572 880" fill="none" stroke="#EF9F27" stroke-width="40"/><path d="M512 488 Q620 676 688 866" fill="none" stroke="#BA7517" stroke-width="40"/><path d="M512 488 Q686 632 798 838" fill="none" stroke="#EF9F27" stroke-width="40"/></g><path d="M792 182 l22 54 54 22 -54 22 -22 54 -22 -54 -54 -22 54 -22 Z" fill="#D85A30"/><path d="M236 232 l14 34 34 14 -34 14 -14 34 -14 -34 -34 -14 34 -14 Z" fill="#EF9F27"/></svg>
+      </span>
+      Jharu
+    </a>
+    <nav class="hd-nav">
+      <a href="#what">What it cleans</a>
+      <a href="#compare">vs other cleaners</a>
+      <a href="#faq">FAQ</a>
+      <a class="hd-cta" href="#download">Download free</a>
+    </nav>
+  </div>
+</header>
+
+<a id="top"></a>
+<main>
+  <section class="hero">
+    <div class="jw hero-grid">
+      <div>
+        <p class="eyebrow">Free · open source · no telemetry</p>
+        <h1 style="margin-top:18px;">The disk cleaner that understands <span class="swept">AI and dev clutter</span>.</h1>
+        <p class="hero-sub">Reclaim the gigabytes your models, package managers, and dead apps leave behind — on macOS and Windows.</p>
+        <div class="hero-cta">
+          <a class="btn btn-mac" href="#download">
+            <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M16.4 12.9c0-2.3 1.9-3.4 2-3.5-1.1-1.6-2.8-1.8-3.4-1.8-1.4-.1-2.8.9-3.5.9s-1.8-.8-3-.8c-1.5 0-2.9.9-3.7 2.3-1.6 2.7-.4 6.8 1.1 9 .7 1.1 1.6 2.3 2.8 2.2 1.1 0 1.5-.7 2.9-.7s1.7.7 2.9.7c1.2 0 2-1.1 2.7-2.1.8-1.2 1.2-2.4 1.2-2.5-.1 0-2.3-.9-2.3-3.6zM14.1 5.9c.6-.8 1-1.9.9-3-.9 0-2 .6-2.7 1.4-.6.7-1.1 1.8-1 2.8 1 .1 2.1-.5 2.8-1.2z"/></svg>
+            Download for macOS
+          </a>
+          <a class="btn btn-win" href="#download">
+            <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M3 5.6l7.5-1v7.2H3V5.6zm0 12.8l7.5 1v-7.1H3v6.1zm8.4 1.1L21 20.9V12h-9.6v7.5zM11.4 3L21 3.1V11h-9.6V3z"/></svg>
+            Windows
+          </a>
+        </div>
+        <p class="hero-note"><span class="dot"></span> Everything goes to the Trash — nothing is permanently deleted. Universal Mac build (Apple Silicon + Intel).</p>
+      </div>
+
+      <div class="receipt reveal">
+        <div class="receipt-top">
+          <div class="receipt-dots" aria-hidden="true"><i style="background:#E9605A"></i><i style="background:#EFB33E"></i><i style="background:#54B778"></i></div>
+          <span class="receipt-title">jharu — scan complete</span>
+          <span style="width:52px"></span>
+        </div>
+        <div class="receipt-body">
+          <div class="rrow">
+            <span class="rname">Hugging Face cache <span class="tag tag-ml">ML models</span></span>
+            <span class="rsize">16.5 GB</span>
+            <span class="rpath">~/.cache/huggingface · 7 never loaded</span>
+          </div>
+          <div class="rrow">
+            <span class="rname">Ollama models <span class="tag tag-unused">unused 4 mo</span></span>
+            <span class="rsize">12.4 GB</span>
+            <span class="rpath">~/.ollama/models</span>
+          </div>
+          <div class="rrow">
+            <span class="rname">npm cache <span class="tag tag-safe">safe</span></span>
+            <span class="rsize">8.0 GB</span>
+            <span class="rpath">~/.npm/_cacache</span>
+          </div>
+          <div class="rrow">
+            <span class="rname">Conda environments <span class="tag tag-unused">4 stale</span></span>
+            <span class="rsize">3.3 GB</span>
+            <span class="rpath">~/miniconda3/envs</span>
+          </div>
+        </div>
+        <div class="receipt-foot">
+          <span class="lbl">Reclaimable right now</span>
+          <span class="amt mono" id="counter">40.2 GB</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div class="strip">
+    <div class="jw strip-in">
+      <span class="lbl">Understands</span>
+      <span class="name">Hugging&nbsp;Face</span>
+      <span class="name">Ollama</span>
+      <span class="name">PyTorch</span>
+      <span class="name">Whisper</span>
+      <span class="name">conda</span>
+      <span class="name">npm</span>
+      <span class="name">Docker</span>
+      <span class="name">Xcode</span>
+      <span class="name">Cargo</span>
+    </div>
+  </div>
+
+  <section id="what">
+    <div class="jw">
+      <div class="sec-head reveal">
+        <p class="eyebrow">The problem</p>
+        <h2>Your disk is full of things you downloaded once.</h2>
+        <p>A model you tried for an afternoon. Package caches from five virtualenvs. An app you uninstalled a year ago that never cleaned up after itself. Generic cleaners see folder sizes. Jharu knows what the data actually is — and whether you ever used it.</p>
+      </div>
+      <div class="eat reveal" role="img" aria-label="Typical reclaimable space by category: ML model caches 21 gigabytes, package manager caches 19 gigabytes, app leftovers 9 gigabytes, old installers and junk 6 gigabytes">
+        <div class="bar"><span class="who">ML model caches<small>hugging face · ollama · whisper</small></span><span class="track"><span class="fill" style="width:100%;background:var(--violet)"></span></span><span class="amt">21 GB</span></div>
+        <div class="bar"><span class="who">Package caches<small>npm · pip · conda · cargo</small></span><span class="track"><span class="fill" style="width:90%;background:var(--teal)"></span></span><span class="amt">19 GB</span></div>
+        <div class="bar"><span class="who">App leftovers<small>uninstalled, still on disk</small></span><span class="track"><span class="fill" style="width:43%;background:var(--accent)"></span></span><span class="amt">9 GB</span></div>
+        <div class="bar"><span class="who">Installers &amp; junk<small>downloads · backups · logs</small></span><span class="track"><span class="fill" style="width:29%;background:var(--amber)"></span></span><span class="amt">6 GB</span></div>
+      </div>
+    </div>
+  </section>
+
+  <section id="features" style="padding-top:0;">
+    <div class="jw">
+      <div class="sec-head reveal">
+        <p class="eyebrow">What makes it different</p>
+        <h2>It tells used from merely downloaded.</h2>
+      </div>
+      <div class="cards">
+        <div class="card-f reveal">
+          <span class="ic" style="background:color-mix(in srgb,var(--violet) 15%,transparent)"><svg viewBox="0 0 24 24" fill="none" stroke="var(--violet)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a10 10 0 1 0 10 10"/><path d="M12 6v6l4 2"/></svg></span>
+          <h3>Per-model ML intelligence</h3>
+          <p>Every model listed individually — <code>Hugging Face</code>, <code>Ollama</code>, <code>Whisper</code>. Jharu separates models you actually loaded from ones downloaded once and never opened. Shared Ollama layers are kept, so removing one never breaks another.</p>
+        </div>
+        <div class="card-f reveal">
+          <span class="ic" style="background:color-mix(in srgb,var(--teal) 15%,transparent)"><svg viewBox="0 0 24 24" fill="none" stroke="var(--teal)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="8" height="8" rx="1"/><rect x="13" y="3" width="8" height="5" rx="1"/><rect x="13" y="11" width="8" height="10" rx="1"/><rect x="3" y="14" width="8" height="7" rx="1"/></svg></span>
+          <h3>See your whole disk as a map</h3>
+          <p>A treemap sizes every folder by what it holds, colour-coded by type. Click a block to go inside. The biggest space-eater is simply the biggest rectangle — no more guessing.</p>
+        </div>
+        <div class="card-f reveal">
+          <span class="ic" style="background:color-mix(in srgb,var(--accent) 15%,transparent)"><svg viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M8 6V4a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2"/><path d="M19 6l-1 14a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1L5 6"/></svg></span>
+          <h3>Nothing is ever really deleted</h3>
+          <p>Every clean moves data to the Trash or Recycle Bin, and a plain-English dialog tells you the real cost first — a cache rebuilds itself, a model re-downloads, your own files are gone for good.</p>
+        </div>
+        <div class="card-f reveal">
+          <span class="ic" style="background:color-mix(in srgb,var(--blue) 15%,transparent)"><svg viewBox="0 0 24 24" fill="none" stroke="var(--blue)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-6.2-8.5"/><path d="M22 4l-10 10-3-3"/></svg></span>
+          <h3>Clean uninstaller</h3>
+          <p>Removes an app <em>and</em> the support files, caches, and preferences it scattered across your system. On Windows it runs each program's own uninstaller, then sweeps the leftovers.</p>
+        </div>
+        <div class="card-f reveal">
+          <span class="ic" style="background:color-mix(in srgb,var(--amber) 20%,transparent)"><svg viewBox="0 0 24 24" fill="none" stroke="var(--brown)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M7 14l4-4 3 3 5-6"/></svg></span>
+          <h3>Python environment analyzer</h3>
+          <p>Finds every virtualenv and conda environment and shows what duplication costs — the "<code>torch</code> is installed eleven times" problem, quantified across your whole machine.</p>
+        </div>
+        <div class="card-f reveal">
+          <span class="ic" style="background:color-mix(in srgb,var(--teal) 15%,transparent)"><svg viewBox="0 0 24 24" fill="none" stroke="var(--teal)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="14" rx="2"/><path d="M8 21h8"/><path d="M12 18v3"/><path d="M7 12l3-3 2 2 4-5"/></svg></span>
+          <h3>Honest by design</h3>
+          <p>No registry cleaner. Prefetch is shown but never cleared. If Jharu can't read a folder, it says so instead of hiding it. A cleaner that hides what it can't see is worse than one that admits it.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="compare" style="padding-top:0;">
+    <div class="jw">
+      <div class="sec-head reveal">
+        <p class="eyebrow">Honest comparison</p>
+        <h2>A free CleanMyMac alternative, built for people who make things.</h2>
+        <p>Generic cleaners are built to look busy and sell a subscription. Jharu does one thing deeply: the developer and AI data no general-purpose cleaner understands.</p>
+      </div>
+      <div class="cmp reveal">
+        <div class="cmp-wrap">
+          <table>
+            <colgroup><col><col class="us-col"><col><col></colgroup>
+            <thead>
+              <tr><th></th><th class="us">Jharu</th><th>CleanMyMac</th><th>CCleaner</th></tr>
+            </thead>
+            <tbody>
+              <tr><td>Price</td><td class="us"><span class="yes">Free forever</span></td><td>$40+/yr</td><td>Freemium</td></tr>
+              <tr><td>Open source</td><td class="us"><span class="yes">Yes · Apache 2.0</span></td><td class="no">No</td><td class="no">No</td></tr>
+              <tr><td>Understands ML model caches</td><td class="us"><span class="yes">Yes</span></td><td class="no">No</td><td class="no">No</td></tr>
+              <tr><td>Used vs never-loaded detection</td><td class="us"><span class="yes">Yes</span></td><td class="no">No</td><td class="no">No</td></tr>
+              <tr><td>Telemetry / tracking</td><td class="us"><span class="yes">None</span></td><td>Yes</td><td>Yes</td></tr>
+              <tr><td>macOS &amp; Windows</td><td class="us"><span class="yes">Both</span></td><td>macOS only</td><td>Both</td></tr>
+              <tr><td>Registry "cleaner" snake oil</td><td class="us"><span class="yes">Never</span></td><td>—</td><td class="no">Yes</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="faq" style="padding-top:0;">
+    <div class="jw">
+      <div class="sec-head reveal">
+        <p class="eyebrow">Answers</p>
+        <h2>Frequently asked questions</h2>
+      </div>
+      <div class="faq reveal">
+        <details open><summary>Is Jharu a free disk cleaner?</summary><div class="ans">Yes. Jharu is completely free and open source under the Apache 2.0 license — no subscription, no paid tier, no ads, and no telemetry. It runs on both macOS and Windows.</div></details>
+        <details><summary>Is it an AI cleaner?</summary><div class="ans">Not in the sense of using AI to decide what to delete — Jharu is precise and rule-based, not a guessing machine. But it is the best cleaner for <em>AI clutter</em>: it understands the model caches that tools like Hugging Face, Ollama, PyTorch, and Whisper leave behind, and tells you which models you actually loaded versus which you only downloaded.</div></details>
+        <details><summary>How do I clear the Hugging Face or Ollama model cache?</summary><div class="ans">Open Jharu's ML models tab. It lists every downloaded model with its exact size and whether you have loaded it since downloading. Select the ones you no longer need and move them to the Trash — they re-download automatically the next time your code asks for them. Shared Ollama layers are preserved so removing one model never breaks another.</div></details>
+        <details><summary>Is it safe? Will it delete something important?</summary><div class="ans">Nothing is ever permanently deleted — every clean moves data to the macOS Trash or Windows Recycle Bin, where you can restore it. Before each action a dialog states the real consequence in plain language, and operating-system locations are protected and can never be cleaned.</div></details>
+        <details><summary>Is this a good free alternative to CleanMyMac or CCleaner?</summary><div class="ans">Yes, especially for developers and machine-learning practitioners. It is free and open source with no upsell, and its focus is deeper: the model caches, package caches, virtual environments, and app leftovers that general-purpose cleaners do not understand.</div></details>
+        <details><summary>Does it work on both Mac and Windows?</summary><div class="ans">Yes. The macOS build is universal (Apple Silicon and Intel in one download); the Windows build is a standard 64-bit installer. Jharu keeps itself up to date in-app on both.</div></details>
+      </div>
+    </div>
+  </section>
+
+  <section id="download" style="padding-top:0;">
+    <div class="jw">
+      <div class="band reveal">
+        <h2>Reclaim your disk in about a minute.</h2>
+        <p>Download Jharu, run one scan, and see exactly what is safe to remove — with the real numbers from your own machine.</p>
+        <div class="hero-cta">
+          <a class="btn btn-mac" style="background:var(--paper);color:var(--ink)" href="https://github.com/riponcm/Jharu/releases/latest/download/Jharu_0.2.0_universal.dmg">
+            <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M16.4 12.9c0-2.3 1.9-3.4 2-3.5-1.1-1.6-2.8-1.8-3.4-1.8-1.4-.1-2.8.9-3.5.9s-1.8-.8-3-.8c-1.5 0-2.9.9-3.7 2.3-1.6 2.7-.4 6.8 1.1 9 .7 1.1 1.6 2.3 2.8 2.2 1.1 0 1.5-.7 2.9-.7s1.7.7 2.9.7c1.2 0 2-1.1 2.7-2.1.8-1.2 1.2-2.4 1.2-2.5-.1 0-2.3-.9-2.3-3.6zM14.1 5.9c.6-.8 1-1.9.9-3-.9 0-2 .6-2.7 1.4-.6.7-1.1 1.8-1 2.8 1 .1 2.1-.5 2.8-1.2z"/></svg>
+            Download for macOS
+          </a>
+          <a class="btn btn-win" href="https://github.com/riponcm/Jharu/releases/latest/download/Jharu_0.2.0_x64-setup.exe">
+            <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M3 5.6l7.5-1v7.2H3V5.6zm0 12.8l7.5 1v-7.1H3v6.1zm8.4 1.1L21 20.9V12h-9.6v7.5zM11.4 3L21 3.1V11h-9.6V3z"/></svg>
+            Download for Windows
+          </a>
+        </div>
+        <p class="amt-line">v0.2.0 · Apache 2.0 · <a href="https://github.com/riponcm/Jharu" style="color:inherit;text-decoration:underline">source on GitHub</a></p>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer class="ft">
+  <div class="jw">
+    <div class="ft-in">
+      <div style="max-width:280px">
+        <a class="brand" href="#top">
+          <span class="logo" aria-hidden="true"><svg viewBox="0 0 1024 1024"><g stroke-linecap="round"><line x1="512" y1="150" x2="512" y2="430" stroke="#854F0B" stroke-width="52"/><rect x="430" y="410" width="164" height="78" rx="34" fill="#D85A30"/><path d="M512 488 Q338 632 226 838" fill="none" stroke="#BA7517" stroke-width="40"/><path d="M512 488 Q404 676 336 866" fill="none" stroke="#EF9F27" stroke-width="40"/><path d="M512 488 Q480 690 452 880" fill="none" stroke="#BA7517" stroke-width="40"/><path d="M512 488 Q544 690 572 880" fill="none" stroke="#EF9F27" stroke-width="40"/><path d="M512 488 Q620 676 688 866" fill="none" stroke="#BA7517" stroke-width="40"/><path d="M512 488 Q686 632 798 838" fill="none" stroke="#EF9F27" stroke-width="40"/></g><path d="M792 182 l22 54 54 22 -54 22 -22 54 -22 -54 -54 -22 54 -22 Z" fill="#D85A30"/><path d="M236 232 l14 34 34 14 -34 14 -14 34 -14 -34 -34 -14 34 -14 Z" fill="#EF9F27"/></svg></span>
+          Jharu
+        </a>
+        <p style="font-size:14px;color:var(--ink-2);margin-top:14px;">Storage insight and cleanup for developers. <em>Jharu</em> is Bengali for broom.</p>
+      </div>
+      <div class="ft-links">
+        <div class="ft-col">
+          <h4>Product</h4>
+          <a href="#what">What it cleans</a>
+          <a href="#features">Features</a>
+          <a href="#compare">Comparison</a>
+          <a href="#download">Download</a>
+        </div>
+        <div class="ft-col">
+          <h4>Project</h4>
+          <a href="https://github.com/riponcm/Jharu">GitHub</a>
+          <a href="https://github.com/riponcm/Jharu/releases">Releases</a>
+          <a href="https://github.com/riponcm/Jharu/blob/main/CHANGELOG.md">Changelog</a>
+          <a href="https://github.com/riponcm/Jharu/issues">Report an issue</a>
+        </div>
+        <div class="ft-col">
+          <h4>Platforms</h4>
+          <a href="#download">macOS (Apple Silicon)</a>
+          <a href="#download">macOS (Intel)</a>
+          <a href="#download">Windows 64-bit</a>
+        </div>
+      </div>
+    </div>
+    <div class="ft-legal">
+      <span>A <a href="https://matily.org">Matily.org</a> product · Free and open source under Apache 2.0.</span>
+      <span>© 2026 Jharu</span>
+    </div>
+  </div>
+</footer>
+
+<script>
+(function () {
+  var io = new IntersectionObserver(function (entries) {
+    entries.forEach(function (e) { if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target); } });
+  }, { threshold: 0.12 });
+  document.querySelectorAll('.reveal').forEach(function (el) { io.observe(el); });
+
+  // count-up on the receipt total
+  var el = document.getElementById('counter');
+  if (el && !window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    var target = 40.2, start = null;
+    function step(ts) {
+      if (!start) start = ts;
+      var p = Math.min((ts - start) / 900, 1);
+      var eased = 1 - Math.pow(1 - p, 3);
+      el.textContent = (eased * target).toFixed(1) + ' GB';
+      if (p < 1) requestAnimationFrame(step);
+    }
+    requestAnimationFrame(step);
+  }
+})();
+</script>
+
+</body>
+</html>
