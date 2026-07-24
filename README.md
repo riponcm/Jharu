@@ -8,6 +8,7 @@
 
 Jharu finds and safely removes the gigabytes that development tools leave behind: machine learning model caches, package manager caches, Docker data, leftovers from uninstalled apps, and forgotten junk files — all from one professional dashboard.
 
+[![Website](https://img.shields.io/badge/website-jharu.matily.org-D85A30)](https://jharu.matily.org)
 [![GitHub stars](https://img.shields.io/github/stars/riponcm/Jharu?style=flat&color=EF9F27)](https://github.com/riponcm/Jharu/stargazers)
 [![Downloads](https://img.shields.io/github/downloads/riponcm/Jharu/total?color=1D9E75)](https://github.com/riponcm/Jharu/releases)
 [![License](https://img.shields.io/badge/license-Apache--2.0-blue)](LICENSE)
@@ -39,6 +40,18 @@ Typical problems Jharu solves:
 - Leftover settings, caches, and support files from apps you uninstalled long ago
 - Old installers, phone backups, logs, and large files you have not touched in months
 - Not knowing what is actually using your disk space
+
+## Watch the demo
+
+See a scan, a plain-English breakdown, and a click to clean — with the real numbers from a real machine.
+
+<div align="center">
+
+[![Watch the Jharu demo — scanning and cleaning developer and ML caches](https://i.ytimg.com/vi/pF8etchkChI/maxresdefault.jpg)](https://www.youtube.com/watch?v=pF8etchkChI)
+
+<em>▶ Watch on YouTube — reclaiming gigabytes in under a minute</em>
+
+</div>
 
 ## Screenshots
 
@@ -93,6 +106,20 @@ Capacity and SMART status per drive, plus a fill forecast built from a daily cap
 
 **In-app updates.**
 Jharu checks GitHub releases for new versions and downloads and installs them from inside the app — signed, verified, and with a one-click restart.
+
+## How Jharu compares
+
+Generic cleaners are built to look busy and sell a subscription. Jharu does one thing deeply: the developer and AI data no general-purpose cleaner understands.
+
+| | Jharu | CleanMyMac | CCleaner |
+| --- | --- | --- | --- |
+| Price | **Free forever** | $40+/yr | Freemium |
+| Open source | **Yes · Apache 2.0** | No | No |
+| Understands ML model caches | **Yes** | No | No |
+| Used vs never-loaded detection | **Yes** | No | No |
+| Telemetry / tracking | **None** | Yes | Yes |
+| macOS and Windows | **Both** | macOS only | Both |
+| Registry "cleaner" | **Never (it does not work)** | — | Yes |
 
 ## What can Jharu clean?
 
