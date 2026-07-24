@@ -146,7 +146,32 @@ a { color: inherit; text-decoration: none; }
 
 /* hero */
 .hero { padding: 76px 0 56px; position: relative; overflow: hidden; }
-.hero-grid { display: grid; grid-template-columns: 1.05fr 0.95fr; gap: 56px; align-items: center; }
+.hero-grid { display: grid; grid-template-columns: 1.05fr 0.95fr; gap: 56px; align-items: center; position: relative; z-index: 1; }
+/* ambient */
+.hero-glow { position: absolute; right: -4%; top: 4%; width: 620px; height: 620px; border-radius: 50%; z-index: 0; pointer-events: none; background: radial-gradient(circle, rgba(216,90,48,.16), rgba(239,159,39,.07) 46%, transparent 70%); animation: breathe 7s ease-in-out infinite; }
+@keyframes breathe { 0%,100% { transform: scale(1); opacity: .85; } 50% { transform: scale(1.09); opacity: 1; } }
+.mote { position: absolute; width: 7px; height: 7px; border-radius: 50%; background: var(--amber); opacity: 0; z-index: 0; pointer-events: none; }
+.mote.m1 { right: 30%; bottom: 22%; animation: moteUp 9s ease-in 0s infinite; }
+.mote.m2 { right: 46%; bottom: 30%; animation: moteUp 11s ease-in 2.5s infinite; }
+.mote.m3 { right: 16%; bottom: 18%; animation: moteUp 10s ease-in 5s infinite; background: var(--accent); }
+.mote.m4 { right: 38%; bottom: 12%; animation: moteUp 12s ease-in 7s infinite; }
+@keyframes moteUp { 0% { transform: translateY(24px) scale(.5); opacity: 0; } 12% { opacity: .55; } 80% { opacity: .4; } 100% { transform: translateY(-150px) scale(1); opacity: 0; } }
+/* live scan on the receipt */
+.scanline { position: absolute; left: 6px; right: 6px; top: 42px; height: 64px; border-radius: 10px; z-index: 6; pointer-events: none; opacity: 0; background: linear-gradient(180deg, transparent, rgba(216,90,48,.10) 55%, rgba(216,90,48,.20)); border-bottom: 2px solid rgba(216,90,48,.7); }
+.receipt.scanning .scanline { animation: scanDown 1.5s cubic-bezier(.4,0,.2,1) forwards; }
+@keyframes scanDown { 0% { transform: translateY(0); opacity: 1; } 88% { opacity: 1; } 100% { transform: translateY(360px); opacity: 0; } }
+.rrow { transition: opacity .45s ease, transform .45s ease; }
+.receipt.scanning .rrow { opacity: 0; transform: translateY(10px); }
+.receipt.scanning .rrow.revealed { opacity: 1; transform: none; }
+.receipt-foot .amt.pop { animation: amtpop .5s ease; }
+@keyframes amtpop { 0% { transform: scale(1); } 42% { transform: scale(1.14); } 100% { transform: scale(1); } }
+#scan-status.live { color: var(--accent-ink); }
+@media (prefers-reduced-motion: reduce) {
+  .hero-glow, .mote { animation: none; }
+  .mote { display: none; }
+  .receipt.scanning .rrow { opacity: 1; transform: none; }
+  .scanline { display: none; }
+}
 @media (max-width: 920px) { .hero-grid { grid-template-columns: 1fr; gap: 40px; } }
 .hero h1 { font-size: clamp(38px, 6vw, 62px); font-weight: 700; }
 .hero h1 .swept { color: var(--accent); position: relative; white-space: nowrap; }
@@ -298,6 +323,11 @@ section { padding: 84px 0; }
 <a id="top"></a>
 <main>
   <section class="hero">
+    <span class="hero-glow" aria-hidden="true"></span>
+    <span class="mote m1" aria-hidden="true"></span>
+    <span class="mote m2" aria-hidden="true"></span>
+    <span class="mote m3" aria-hidden="true"></span>
+    <span class="mote m4" aria-hidden="true"></span>
     <div class="jw hero-grid">
       <div>
         <p class="eyebrow">Free · open source · no telemetry</p>
@@ -316,31 +346,32 @@ section { padding: 84px 0; }
         <p class="hero-note"><span class="dot"></span> Everything goes to the Trash — nothing is permanently deleted. Universal Mac build (Apple Silicon + Intel).</p>
       </div>
 
-      <div class="receipt reveal">
+      <div class="receipt reveal" id="receipt">
+        <span class="scanline" aria-hidden="true"></span>
         <div class="receipt-top">
           <div class="receipt-dots" aria-hidden="true"><i style="background:#E9605A"></i><i style="background:#EFB33E"></i><i style="background:#54B778"></i></div>
-          <span class="receipt-title">jharu — scan complete</span>
+          <span class="receipt-title">jharu — <span id="scan-status">scan complete</span></span>
           <span style="width:52px"></span>
         </div>
         <div class="receipt-body">
           <div class="rrow">
             <span class="rname">Hugging Face cache <span class="tag tag-ml">ML models</span></span>
-            <span class="rsize">16.5 GB</span>
+            <span class="rsize" data-to="16.5">16.5 GB</span>
             <span class="rpath">~/.cache/huggingface · 7 never loaded</span>
           </div>
           <div class="rrow">
             <span class="rname">Ollama models <span class="tag tag-unused">unused 4 mo</span></span>
-            <span class="rsize">12.4 GB</span>
+            <span class="rsize" data-to="12.4">12.4 GB</span>
             <span class="rpath">~/.ollama/models</span>
           </div>
           <div class="rrow">
             <span class="rname">npm cache <span class="tag tag-safe">safe</span></span>
-            <span class="rsize">8.0 GB</span>
+            <span class="rsize" data-to="8.0">8.0 GB</span>
             <span class="rpath">~/.npm/_cacache</span>
           </div>
           <div class="rrow">
             <span class="rname">Conda environments <span class="tag tag-unused">4 stale</span></span>
-            <span class="rsize">3.3 GB</span>
+            <span class="rsize" data-to="3.3">3.3 GB</span>
             <span class="rpath">~/miniconda3/envs</span>
           </div>
         </div>
@@ -575,18 +606,68 @@ section { padding: 84px 0; }
     dv.addEventListener('keydown', function (e) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); load(); } });
   }
 
-  // count-up on the receipt total
-  var el = document.getElementById('counter');
-  if (el && !window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
-    var target = 40.2, start = null;
+  // live-scan animation on the hero receipt
+  var reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  function countUp(el, target, dur, done) {
+    var start = null;
     function step(ts) {
       if (!start) start = ts;
-      var p = Math.min((ts - start) / 900, 1);
-      var eased = 1 - Math.pow(1 - p, 3);
-      el.textContent = (eased * target).toFixed(1) + ' GB';
+      var p = Math.min((ts - start) / dur, 1);
+      var e = 1 - Math.pow(1 - p, 3);
+      el.textContent = (e * target).toFixed(1) + ' GB';
       if (p < 1) requestAnimationFrame(step);
+      else if (done) done();
     }
     requestAnimationFrame(step);
+  }
+  var receipt = document.getElementById('receipt');
+  var counter = document.getElementById('counter');
+  var status = document.getElementById('scan-status');
+  var rows = receipt ? [].slice.call(receipt.querySelectorAll('.rrow')) : [];
+  var sizes = receipt ? [].slice.call(receipt.querySelectorAll('.rsize')) : [];
+  var scanning = false;
+
+  function runScan() {
+    if (!receipt || scanning) return;
+    if (reduce) {
+      sizes.forEach(function (s) { s.textContent = s.dataset.to + ' GB'; });
+      if (counter) counter.textContent = '40.2 GB';
+      return;
+    }
+    scanning = true;
+    receipt.classList.add('scanning');
+    if (status) { status.textContent = 'scanning…'; status.classList.add('live'); }
+    if (counter) counter.textContent = '0.0 GB';
+    rows.forEach(function (row) { row.classList.remove('revealed'); });
+
+    // rows reveal in sequence as the scan line passes, showing real sizes
+    rows.forEach(function (row, idx) {
+      setTimeout(function () { row.classList.add('revealed'); }, 260 + idx * 300);
+    });
+
+    // the headline total is the one number that counts up
+    setTimeout(function () {
+      receipt.classList.remove('scanning');
+      if (status) { status.textContent = 'scan complete'; status.classList.remove('live'); }
+      if (counter) {
+        countUp(counter, 40.2, 750, function () {
+          counter.classList.add('pop');
+          setTimeout(function () { counter.classList.remove('pop'); }, 500);
+        });
+        // guarantee the final value even if animation frames are throttled
+        setTimeout(function () { counter.textContent = '40.2 GB'; }, 950);
+      }
+      scanning = false;
+    }, 260 + rows.length * 300 + 300);
+  }
+
+  // run once when the hero first appears, and again on hover for interactivity
+  if (receipt) {
+    var seen = new IntersectionObserver(function (es) {
+      es.forEach(function (e) { if (e.isIntersecting) { runScan(); seen.unobserve(e.target); } });
+    }, { threshold: 0.4 });
+    seen.observe(receipt);
+    receipt.addEventListener('mouseenter', runScan);
   }
 })();
 </script>
