@@ -201,7 +201,7 @@ section { padding: 84px 0; }
 .bar .who { font-size: 15px; font-weight: 500; }
 .bar .who small { display: block; font-family: "JetBrains Mono", monospace; font-size: 11px; color: var(--ink-3); font-weight: 400; }
 .bar .track { height: 26px; background: var(--paper-2); border-radius: 7px; overflow: hidden; }
-.bar .fill { height: 100%; border-radius: 7px; }
+.bar .fill { display: block; height: 100%; border-radius: 7px; min-width: 8px; }
 .bar .amt { font-family: "JetBrains Mono", monospace; font-size: 14.5px; font-weight: 500; min-width: 62px; text-align: right; }
 
 /* feature cards */
@@ -214,6 +214,18 @@ section { padding: 84px 0; }
 .card-f h3 { font-size: 18.5px; margin-bottom: 8px; }
 .card-f p { font-size: 15px; color: var(--ink-2); line-height: 1.55; }
 .card-f p code { font-family: "JetBrains Mono", monospace; font-size: 12.5px; background: var(--paper-2); padding: 1px 5px; border-radius: 4px; color: var(--accent-ink); }
+
+/* demo video */
+.video { position: relative; aspect-ratio: 16 / 9; border-radius: 18px; overflow: hidden; border: 1px solid var(--line); box-shadow: var(--shadow); background: linear-gradient(135deg, #2A2018 0%, #3A2A1A 50%, #4A3320 100%); cursor: pointer; }
+.video img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; border: 0; }
+.video::after { content: ""; position: absolute; inset: 0; background: linear-gradient(to top, rgba(20,12,6,.45), rgba(20,12,6,.05) 45%); pointer-events: none; }
+.video .play { position: absolute; inset: 0; margin: auto; width: 88px; height: 88px; border-radius: 50%; border: 0; background: var(--accent); color: #fff; display: grid; place-items: center; cursor: pointer; z-index: 2; box-shadow: 0 10px 30px -6px rgba(216,90,48,.6); transition: transform .18s ease, background .18s ease; }
+.video:hover .play { transform: scale(1.08); background: #E9663A; }
+.video .play svg { width: 32px; height: 32px; margin-left: 4px; }
+.video .cap { position: absolute; left: 20px; bottom: 18px; z-index: 2; color: #fff; font-family: "JetBrains Mono", monospace; font-size: 13px; letter-spacing: .04em; text-shadow: 0 1px 8px rgba(0,0,0,.5); }
+.video .cap b { color: var(--amber); font-weight: 500; }
+.video iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; z-index: 3; }
+.video-frame { max-width: 920px; margin: 0 auto; }
 
 /* comparison */
 .cmp { background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); overflow: hidden; box-shadow: var(--shadow); }
@@ -275,6 +287,7 @@ section { padding: 84px 0; }
     </a>
     <nav class="hd-nav">
       <a href="#what">What it cleans</a>
+      <a href="#demo">Demo</a>
       <a href="#compare">vs other cleaners</a>
       <a href="#faq">FAQ</a>
       <a class="hd-cta" href="#download">Download free</a>
@@ -411,6 +424,25 @@ section { padding: 84px 0; }
     </div>
   </section>
 
+  <section id="demo" style="padding-top:0;">
+    <div class="jw">
+      <div class="sec-head reveal" style="text-align:center;margin-left:auto;margin-right:auto;">
+        <p class="eyebrow">Watch</p>
+        <h2>See it reclaim gigabytes in under a minute.</h2>
+        <p style="margin-left:auto;margin-right:auto;">One scan, a plain-English breakdown, and a click to clean — with the real numbers from a real machine.</p>
+      </div>
+      <div class="video-frame reveal">
+        <div class="video" id="demo-video" data-id="pF8etchkChI" role="button" tabindex="0" aria-label="Play the Jharu demo video">
+          <img src="https://i.ytimg.com/vi/pF8etchkChI/maxresdefault.jpg" alt="Jharu demo — scanning and cleaning developer caches" loading="lazy" onerror="this.style.display='none'">
+          <span class="cap"><b>▸ demo</b> · jharu v0.2.0 · macOS</span>
+          <button class="play" aria-label="Play video">
+            <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg>
+          </button>
+        </div>
+      </div>
+    </div>
+  </section>
+
   <section id="compare" style="padding-top:0;">
     <div class="jw">
       <div class="sec-head reveal">
@@ -524,6 +556,24 @@ section { padding: 84px 0; }
     entries.forEach(function (e) { if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target); } });
   }, { threshold: 0.12 });
   document.querySelectorAll('.reveal').forEach(function (el) { io.observe(el); });
+
+  // demo video: load the YouTube iframe only on click (keeps the page fast)
+  var dv = document.getElementById('demo-video');
+  if (dv) {
+    var load = function () {
+      if (dv.dataset.loaded) return;
+      dv.dataset.loaded = '1';
+      var id = dv.getAttribute('data-id');
+      var f = document.createElement('iframe');
+      f.src = 'https://www.youtube-nocookie.com/embed/' + id + '?autoplay=1&rel=0&modestbranding=1';
+      f.title = 'Jharu demo video';
+      f.allow = 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture';
+      f.allowFullscreen = true;
+      dv.appendChild(f);
+    };
+    dv.addEventListener('click', load);
+    dv.addEventListener('keydown', function (e) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); load(); } });
+  }
 
   // count-up on the receipt total
   var el = document.getElementById('counter');
