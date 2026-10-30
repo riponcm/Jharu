@@ -57,6 +57,12 @@ See a scan, a plain-English breakdown, and a click to clean — with the real nu
 
 <div align="center">
 
+<img src="docs/screenshots/overview.png" alt="Jharu overview with free space on each drive, what is safe to clean now, live CPU and memory load, and cleanable space grouped by how safe it is" width="820" />
+
+<em>Overview — every drive, what is safe to clean now, and where the rest of the space sits</em>
+
+<br /><br />
+
 <img src="docs/screenshots/dev-clean.png" alt="Jharu dashboard showing reclaimable disk space, a storage breakdown bar, and developer cache findings with safety ratings" width="820" />
 
 <em>Dev clean — every known cache location, sized and rated</em>
@@ -72,6 +78,36 @@ See a scan, a plain-English breakdown, and a click to clean — with the real nu
 <img src="docs/screenshots/deep-clean-treemap.png" alt="Jharu deep clean treemap with folders sized by disk usage and a notice naming folders that could not be read" width="820" />
 
 <em>Deep clean — folders sized by what they hold, and an honest notice about what could not be read</em>
+
+<br /><br />
+
+<img src="docs/screenshots/ai-tools.png" alt="Jharu AI tools tab separating caches that are safe to clear from conversation history and settings that are never selected automatically" width="820" />
+
+<em>AI tools — caches from Claude Code, Codex, Cursor and others, kept apart from history you cannot get back</em>
+
+<br /><br />
+
+<img src="docs/screenshots/worktrees.png" alt="Jharu Git worktrees tab totalling spare checkouts and the merged, clean ones that are safe to remove" width="820" />
+
+<em>Git worktrees — spare checkouts left by coding agents, and which ones git confirms are merged</em>
+
+<br /><br />
+
+<img src="docs/screenshots/speed.png" alt="Jharu Speed tab with live CPU, memory, swap and disk activity, and running programs that can be closed one at a time" width="820" />
+
+<em>Speed — live load and a careful task killer that asks a program to close before forcing it</em>
+
+<br /><br />
+
+<img src="docs/screenshots/gadget.png" alt="Jharu floating gadget showing CPU, memory and free space on the system drive" width="513" />
+
+<em>The floating gadget — CPU, memory and free space, always on top</em>
+
+<br /><br />
+
+<img src="docs/screenshots/system-space.png" alt="Jharu System space tab explaining the hibernation file, what turning it off costs, and the exact command it will run" width="820" />
+
+<em>System space — hibernation, restore points and Docker, with the cost, the undo and the exact command</em>
 
 </div>
 
