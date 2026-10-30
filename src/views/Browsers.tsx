@@ -31,7 +31,7 @@ export default function Browsers({ onRecovered }: { onRecovered: (bytes: number)
     setCleaning(key);
     setConfirming(null);
     try {
-      const outcome = await invoke<CleanOutcome>("clean_paths", { paths });
+      const outcome = await invoke<CleanOutcome>("clean_paths", { paths, source: "Browsers" });
       if (outcome.errors.length) setError(outcome.errors.join("; "));
       onRecovered(outcome.freed_bytes);
       await scan();

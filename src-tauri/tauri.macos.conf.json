@@ -1,0 +1,23 @@
+{
+  "app": {
+    "windows": [
+      {
+        "title": "Jharu",
+        "decorations": true,
+        "titleBarStyle": "Overlay",
+        "hiddenTitle": true,
+        "trafficLightPosition": { "x": 18, "y": 14 },
+        "width": 1100,
+        "height": 760,
+        "minWidth": 860,
+        "minHeight": 560
+      }
+    ]
+  },
+  "bundle": {
+    "macOS": {
+      "entitlements": "./Entitlements.plist",
+      "hardenedRuntime": true
+    }
+  }
+}

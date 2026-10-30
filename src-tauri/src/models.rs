@@ -64,7 +64,7 @@ fn stamps(path: &Path) -> Stamps {
         return Stamps { size, newest_mtime, newest_atime };
     }
 
-    for entry in jwalk::WalkDir::new(path).skip_hidden(false).into_iter().flatten() {
+    for entry in crate::walk::walk(path).skip_hidden(false).into_iter().flatten() {
         if entry.file_type().is_file() {
             if let Ok(meta) = entry.metadata() {
                 consider(&meta);
@@ -154,7 +154,7 @@ fn scan_ollama(home: &Path, out: &mut Vec<ModelEntry>) {
     // digest -> how many models reference it
     let mut refcount: HashMap<String, usize> = HashMap::new();
 
-    for entry in jwalk::WalkDir::new(&manifests).skip_hidden(false).into_iter().flatten() {
+    for entry in crate::walk::walk(&manifests).skip_hidden(false).into_iter().flatten() {
         if !entry.file_type().is_file() {
             continue;
         }
@@ -294,7 +294,9 @@ mod tests {
         ModelReport { total_bytes, unused_bytes, usage_tracking_reliable, models }
     }
 
+    /// Read-only scan of this machine: `cargo test --lib smoke_model_scan -- --ignored --nocapture`
     #[test]
+    #[ignore]
     fn smoke_model_scan() {
         let report = scan_sync();
         println!(

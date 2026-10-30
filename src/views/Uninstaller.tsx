@@ -65,7 +65,7 @@ export default function Uninstaller({ onRecovered }: { onRecovered: (bytes: numb
         await invoke("run_uninstaller", { command: selected.uninstall_command });
         const leftovers = [...checked].filter((p) => p !== selected.path);
         if (leftovers.length) {
-          const swept = await invoke<CleanOutcome>("clean_paths", { paths: leftovers });
+          const swept = await invoke<CleanOutcome>("clean_paths", { paths: leftovers, source: "Uninstaller" });
           if (swept.errors.length) setError(swept.errors.join("; "));
           onRecovered(swept.freed_bytes);
         }
@@ -73,7 +73,7 @@ export default function Uninstaller({ onRecovered }: { onRecovered: (bytes: numb
         setLeftovers(null);
         return;
       }
-      const outcome = await invoke<CleanOutcome>("clean_paths", { paths: [...checked] });
+      const outcome = await invoke<CleanOutcome>("clean_paths", { paths: [...checked], source: "Uninstaller" });
       if (outcome.errors.length) setError(outcome.errors.join("; "));
       onRecovered(outcome.freed_bytes);
       setApps((a) => (a ? a.filter((x) => x.path !== selected.path) : a));

@@ -1,5 +1,7 @@
 use serde::Serialize;
-use std::collections::{HashMap, HashSet};
+use std::collections::HashSet;
+#[cfg(target_os = "macos")]
+use std::collections::HashMap;
 use std::path::{Path, PathBuf};
 
 #[derive(Serialize)]
@@ -29,7 +31,7 @@ fn dir_size(path: &Path) -> u64 {
     if path.is_file() {
         return path.metadata().map(|m| m.len()).unwrap_or(0);
     }
-    jwalk::WalkDir::new(path)
+    crate::walk::walk(path)
         .skip_hidden(false)
         .into_iter()
         .flatten()
@@ -138,6 +140,7 @@ fn last_used_days(app: &Path) -> Option<u64> {
 }
 
 /// Howard Hinnant's civil-date algorithm: days since 1970-01-01.
+#[cfg(target_os = "macos")]
 fn days_from_civil(y: i64, m: i64, d: i64) -> i64 {
     let y = if m <= 2 { y - 1 } else { y };
     let era = if y >= 0 { y } else { y - 399 } / 400;
@@ -148,6 +151,7 @@ fn days_from_civil(y: i64, m: i64, d: i64) -> i64 {
     era * 146_097 + doe - 719_468
 }
 
+#[cfg(target_os = "macos")]
 fn days_from_civil_now() -> Option<i64> {
     let secs = std::time::SystemTime::now()
         .duration_since(std::time::UNIX_EPOCH)

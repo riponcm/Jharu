@@ -4,6 +4,7 @@ import { getVersion } from "@tauri-apps/api/app";
 import { check, type Update } from "@tauri-apps/plugin-updater";
 import { relaunch } from "@tauri-apps/plugin-process";
 import logo from "../assets/jharu-mark.svg";
+import GadgetSettings from "../components/GadgetSettings";
 
 const REPO_URL = "https://github.com/riponcm/Jharu";
 const MATILY_URL = "https://matily.org";
@@ -65,9 +66,11 @@ export default function About() {
       <div className="view-head">
         <div>
           <h2 className="view-title">About</h2>
-          <p className="view-sub">Version, updates, and project links</p>
+          <p className="view-sub">Settings, version, updates, and project links</p>
         </div>
       </div>
+
+      <GadgetSettings />
 
       <div className="about-card">
         <img src={logo} alt="Jharu logo" className="about-logo" />

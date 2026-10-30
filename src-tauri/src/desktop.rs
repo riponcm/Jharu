@@ -51,7 +51,7 @@ fn entry_size(path: &Path) -> u64 {
     if path.is_file() {
         return path.metadata().map(|m| m.len()).unwrap_or(0);
     }
-    jwalk::WalkDir::new(path)
+    crate::walk::walk(path)
         .skip_hidden(false)
         .into_iter()
         .flatten()

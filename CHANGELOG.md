@@ -3,6 +3,74 @@
 All notable changes to Jharu are recorded here. Versions follow
 [semantic versioning](https://semver.org).
 
+## [1.0.0] — 2026-10-30
+
+The first stable release. Jharu grows from a cache cleaner into a full
+storage and speed tool for developers, with a dashboard to start from, and
+every Windows download is now signed.
+
+### Added
+
+- **Overview.** The page Jharu opens on: a ring for every drive with when it
+  fills up, what Jharu has saved week by week, what can be cleaned right now
+  split by safety, live CPU and memory, a map of where the system drive's space
+  goes, and the latest cleans.
+- **Git worktrees.** Finds the spare checkouts that `git worktree`, Claude Code
+  and Codex leave behind. Only worktrees whose commits are already on the main
+  branch and that have nothing uncommitted are preselected; branches are never
+  deleted.
+- **Build folders.** `node_modules`, Rust `target`, `.next`, `dist` and other
+  build output, offered only when the project beside it confirms what it is,
+  with the command that brings it back.
+- **AI tools.** What Claude Code, Codex, Cursor, Windsurf, Copilot, Continue and
+  Aider leave behind, tool by tool. Caches are safe once the tool is closed;
+  conversations, memory and settings are never preselected.
+- **Duplicates.** Identical files and the same model stored by several tools,
+  confirmed by BLAKE3 hashes, never by name or date. Hard links and APFS clones
+  are recognised as shared space, not duplicates.
+- **App sandboxes.** The private AppData copies of Store (MSIX) apps on Windows
+  and sandboxed apps on macOS, which most cleaners never show.
+- **System space.** The hibernation file, restore points, the component store,
+  Time Machine local snapshots and Docker, each with what turning it off costs
+  and the exact command Jharu runs.
+- **Recycle Bin and Trash.** What is in the bin, rated, with emptying by age and
+  a log of everything Jharu moved there with one-click restore.
+- **Space history.** Snapshots of where the space is, "what grew since last
+  time", a fill forecast per drive, low-space alerts, and optional scheduled
+  cleaning of safe caches (off by default).
+- **Startup apps.** What starts when you sign in, rated, with the same
+  reversible switch Task Manager uses on Windows (listing only on macOS).
+- **Speed.** A live view of CPU, memory, disk and the running programs, grouped
+  by program and rated, with a graceful Close and a confirmed Force quit. System
+  processes, security software (including VPN clients) and drivers are never
+  offered.
+- **Floating gadget.** An optional always-on-top bar or card with CPU, memory,
+  free space and the busiest programs.
+- **Deep clean ratings.** Every folder carries a safety rating with the reasons,
+  on the list and on the map. Repositories that are also on a remote are told
+  apart from ones with local-only work.
+
+### Changed
+
+- A new title bar and a sidebar grouped into Developer, Disk, Manage and
+  Insight.
+- Sizes on Windows use the units Explorer uses, so Jharu's numbers match it.
+- Folders Deep clean cannot fully read are named above the map and badged in
+  the list, instead of looking smaller or empty.
+
+### Fixed
+
+- Many Windows fixes, and a full macOS pass: the Trash, iCloud Drive and Library
+  containers are known places, APFS clones are counted once, and window
+  detection and app quitting work on macOS.
+
+### Security
+
+- Windows installers and programs are signed with Azure Artifact Signing, so
+  Windows shows the publisher instead of "Unknown publisher".
+- The macOS app is signed with a Developer ID and notarized by Apple, so it
+  opens without the "can't be opened" warning or a right-click → Open.
+
 ## [0.2.0] — 2026-07-22
 
 The release that made Jharu understand *which* data matters, not just how much

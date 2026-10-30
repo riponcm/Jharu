@@ -1,0 +1,291 @@
+/* The floating gadget, "Obsidian": matte black in every theme, ring gauges,
+   one accent per measure. The window is transparent and sized to the shell
+   below (gadget_fit), so the shell's rounded edge is the window's edge.
+   It does not load App.css: every rule it needs is here. */
+
+html.gadget-root,
+html.gadget-root body,
+html.gadget-root #root {
+  margin: 0;
+  padding: 0;
+  background: transparent;
+  overflow: hidden;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+html.gadget-root #root {
+  display: inline-block;
+}
+
+/* macOS cannot make the web view transparent without Tauri's private API
+   (not allowed in the Mac App Store). Instead gadget.rs clips the window to
+   the shell's own radius, and the page behind the shell matches its colour
+   so the anti-aliased edge has nothing light to blend with. */
+html.gadget-root.platform-mac,
+html.gadget-root.platform-mac body,
+html.gadget-root.platform-mac #root {
+  background: #0b0b0c;
+}
+
+.g-shell {
+  --g-bg: #0b0b0c;
+  --g-edge: #2a2a2e;
+  --g-raise: #161618;
+  --g-track: #232326;
+  --g-text: #ececea;
+  --g-muted: #85858a;
+  --g-cpu: #5dcaa5;
+  --g-mem: #85b7eb;
+  --g-disk: #ef9f27;
+  --g-high: #f09595;
+
+  box-sizing: border-box;
+  background: var(--g-bg);
+  border: 1px solid var(--g-edge);
+  color: var(--g-text);
+  font-family: -apple-system, "Segoe UI", Inter, Helvetica, Arial, sans-serif;
+  font-size: 13px;
+  line-height: 1.3;
+  cursor: default;
+}
+
+.g-shell *,
+.g-shell *::before,
+.g-shell *::after {
+  box-sizing: border-box;
+  margin: 0;
+}
+
+/* ---- bar ---- */
+
+.g-bar {
+  display: inline-flex;
+  align-items: center;
+  gap: 14px;
+  height: 44px;
+  padding: 0 6px 0 10px;
+  border-radius: 22px;
+  white-space: nowrap;
+}
+
+.g-stat {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.g-divider {
+  width: 1px;
+  height: 20px;
+  background: var(--g-track);
+}
+
+.g-k {
+  color: var(--g-muted);
+  font-size: 11.5px;
+}
+
+.g-v {
+  font-family: ui-monospace, "Cascadia Mono", Consolas, monospace;
+  font-variant-numeric: tabular-nums;
+  font-size: 13px;
+}
+
+.g-v.is-high {
+  color: var(--g-high);
+}
+
+.g-actions {
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 0;
+}
+
+.g-icon {
+  all: unset;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  color: var(--g-muted);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.g-icon:hover {
+  background: var(--g-raise);
+  color: var(--g-text);
+}
+
+.g-icon.is-close:hover {
+  color: var(--g-high);
+}
+
+.g-icon:focus-visible,
+.g-btn:focus-visible,
+.g-link:focus-visible {
+  outline: 1.5px solid var(--g-mem);
+  outline-offset: 1px;
+}
+
+/* ---- rings ---- */
+
+.g-ring {
+  flex: none;
+  display: block;
+}
+
+.g-ring-track {
+  fill: none;
+  stroke: var(--g-track);
+}
+
+.g-ring-fill {
+  fill: none;
+  stroke-linecap: round;
+  transition: stroke-dashoffset 0.6s ease;
+}
+
+.g-ring.t-cpu .g-ring-fill { stroke: var(--g-cpu); }
+.g-ring.t-mem .g-ring-fill { stroke: var(--g-mem); }
+.g-ring.t-disk .g-ring-fill { stroke: var(--g-disk); }
+.g-ring.is-high .g-ring-fill { stroke: var(--g-high); }
+
+.g-ring-text {
+  fill: var(--g-text);
+  font-family: ui-monospace, "Cascadia Mono", Consolas, monospace;
+  font-size: 13px;
+}
+
+/* ---- card ---- */
+
+.g-card {
+  width: 268px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 10px 12px 12px 14px;
+  border-radius: 16px;
+}
+
+.g-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-right: -6px;
+}
+
+.g-title {
+  font-weight: 600;
+  font-size: 13px;
+}
+
+.g-rings {
+  display: flex;
+  justify-content: space-between;
+  padding: 2px 4px 0;
+}
+
+.g-gauge {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.g-note {
+  color: var(--g-muted);
+  font-size: 11.5px;
+  line-height: 1.4;
+}
+
+.g-section {
+  color: var(--g-muted);
+  font-size: 10.5px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  border-top: 1px solid var(--g-track);
+  padding-top: 9px;
+}
+
+.g-top {
+  list-style: none;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.g-top li {
+  display: grid;
+  grid-template-columns: 1fr 34px 62px;
+  gap: 6px;
+  align-items: center;
+}
+
+.g-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.g-top .g-v,
+.g-top .g-mem {
+  text-align: right;
+  font-size: 12px;
+}
+
+.g-clean {
+  min-height: 32px;
+  display: flex;
+  align-items: center;
+}
+
+.g-confirm {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  font-size: 12px;
+}
+
+.g-btn {
+  all: unset;
+  box-sizing: border-box;
+  width: 100%;
+  text-align: center;
+  padding: 7px 10px;
+  border-radius: 9px;
+  border: 1px solid var(--g-edge);
+  background: var(--g-raise);
+  color: var(--g-text);
+  font-size: 12.5px;
+  cursor: pointer;
+}
+
+.g-btn:hover {
+  border-color: #3a3a40;
+}
+
+.g-btn.is-accent {
+  color: var(--g-cpu);
+}
+
+.g-confirm .g-btn {
+  width: auto;
+  padding: 5px 12px;
+}
+
+.g-link {
+  all: unset;
+  color: var(--g-mem);
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.g-err {
+  color: var(--g-high);
+}

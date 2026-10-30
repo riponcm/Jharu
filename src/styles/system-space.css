@@ -1,0 +1,225 @@
+/* System space tab. Colours, badges, reason lines and the modal come from
+   App.css; only what is specific to this tab lives here. */
+
+.ss-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 16px 18px;
+  margin-bottom: 14px;
+}
+
+.ss-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.ss-head-main {
+  flex: 1;
+  min-width: 0;
+}
+
+.ss-title {
+  font-size: 15px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.ss-summary {
+  font-size: 12.5px;
+  color: var(--text-2);
+  line-height: 1.5;
+  margin-top: 2px;
+}
+
+.ss-size {
+  text-align: right;
+  min-width: 120px;
+  max-width: 220px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.ss-size .size {
+  font-size: 20px;
+  letter-spacing: -0.02em;
+}
+
+.ss-inline {
+  margin: 10px 0 0;
+}
+
+.ss-facts {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 6px 20px;
+  margin-top: 12px;
+}
+
+.ss-fact {
+  display: flex;
+  flex-direction: column;
+}
+
+.ss-fact dt {
+  font-size: 11.5px;
+  color: var(--text-3);
+}
+
+.ss-fact dd {
+  font-size: 12.5px;
+  color: var(--text);
+  overflow-wrap: anywhere;
+}
+
+.ss-howto {
+  margin-top: 12px;
+  padding: 10px 12px;
+  background: var(--surface-2);
+  border-radius: 8px;
+  font-size: 12.5px;
+  color: var(--text-2);
+  line-height: 1.55;
+}
+
+.ss-inspect {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border);
+}
+
+.ss-action {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border);
+}
+
+.ss-action.is-off {
+  opacity: 0.75;
+}
+
+.ss-action-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.ss-action-run {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.ss-est {
+  font-weight: 600;
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+}
+
+.ss-cost {
+  font-size: 12.5px;
+  color: var(--text-2);
+  margin-top: 6px;
+  line-height: 1.5;
+}
+
+.ss-commands {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-top: 8px;
+  max-height: 110px;
+  overflow-y: auto;
+}
+
+.ss-command {
+  display: block;
+  font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  font-size: 11.5px;
+  color: var(--text-2);
+  background: var(--surface-2);
+  border-radius: 6px;
+  padding: 4px 8px;
+  overflow-wrap: anywhere;
+}
+
+.ss-card .model-meta {
+  margin-top: 4px;
+  line-height: 1.45;
+}
+
+.ss-notice {
+  align-items: flex-start;
+}
+
+.ss-notice p + p {
+  margin-top: 4px;
+}
+
+.ss-output {
+  margin-top: 6px;
+  max-height: 180px;
+  overflow: auto;
+  font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  font-size: 11.5px;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  color: var(--text-2);
+}
+
+.ss-modal .modal-item {
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
+.ss-modal .modal-items {
+  max-height: 160px;
+}
+
+.ss-understand {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin-top: 14px;
+  font-size: 13px;
+  color: var(--text-2);
+}
+
+.ss-understand input {
+  margin-top: 3px;
+}
+
+/* Windows commands report no percentage, so the bar only shows that work is
+   going on. */
+.ss-indeterminate {
+  width: 35%;
+  background: var(--accent);
+  animation: ss-slide 1.3s ease-in-out infinite;
+}
+
+@keyframes ss-slide {
+  0% { margin-left: 0; }
+  50% { margin-left: 65%; }
+  100% { margin-left: 0; }
+}
+
+@media (max-width: 720px) {
+  .ss-head {
+    flex-direction: column;
+  }
+  .ss-size {
+    text-align: left;
+  }
+}

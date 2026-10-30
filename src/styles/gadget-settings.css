@@ -1,0 +1,49 @@
+.gs-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.gs-main {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  cursor: pointer;
+}
+
+.gs-main input {
+  margin-top: 4px;
+}
+
+.gs-main > span {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.gs-sub {
+  color: var(--text-2);
+  font-size: 12.5px;
+}
+
+.gs-modes {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+  padding-left: 24px;
+}
+
+.gs-modes .gs-sub {
+  margin-left: 6px;
+}
+
+.gs-error {
+  color: var(--danger);
+  font-size: 12.5px;
+}

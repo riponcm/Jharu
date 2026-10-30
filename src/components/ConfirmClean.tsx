@@ -1,6 +1,15 @@
 import { formatBytes } from "../format";
 
-export type CleanKind = "cache" | "model" | "environment" | "userfile" | "app";
+export type CleanKind =
+  | "cache"
+  | "model"
+  | "environment"
+  | "userfile"
+  | "app"
+  | "worktree"
+  | "build"
+  | "sandbox"
+  | "system";
 
 export interface ConfirmRequest {
   kind: CleanKind;
@@ -10,6 +19,8 @@ export interface ConfirmRequest {
   bytes: number;
   /// Extra caution text for items Jharu rates as needing review.
   risky?: boolean;
+  /// Locations that need administrator permission; Windows will ask for it.
+  admin?: string[];
 }
 
 const CONSEQUENCE: Record<CleanKind, string> = {
@@ -20,6 +31,14 @@ const CONSEQUENCE: Record<CleanKind, string> = {
   userfile:
     "These are your own files, not cache. Nothing will download them again. Archive them instead if you are not certain you want them gone.",
   app: "This removes the application along with the support files you selected. Anything the app stored that you did not select stays on disk.",
+  system:
+    "These are temporary files, crash reports and download caches that the system and your programs create again as needed. Jharu moves what is inside each folder and keeps the folder itself. Anything a running program has open, or that changed in the last day, stays where it is.",
+  worktree:
+    "These are spare checkouts of a repository. Their branches stay in git, so git worktree add recreates any of them. Jharu checks each one again just before moving it and skips any that gained new work since the scan, then runs git worktree prune so git forgets the folders that are gone.",
+  build:
+    "These are folders your build tools create inside your projects: installed packages, compiler output and caches. Your source files are not touched. Each one comes back by running its install or build command, listed for every folder; virtual environments and CMake folders need extra steps and are rated Caution. Jharu checks each folder again just before moving it and skips any that a dev server or build tool is using.",
+  sandbox:
+    "These are folders inside the private storage of apps from the Microsoft Store or the Mac App Store. Caches and temporary files are made again by the app; anything marked Caution (sign-in cookies, data of an app that is no longer installed) is not. Jharu checks each folder again just before moving it, skips any whose app is running, and keeps the folders an app expects to find, moving only what is inside them.",
 };
 
 export default function ConfirmClean({
@@ -47,6 +66,13 @@ export default function ConfirmClean({
           <p className="modal-warn">
             Jharu rates this one as worth reviewing first — it may hold data that is not
             reproducible. Open it and check before you continue.
+          </p>
+        )}
+
+        {request.admin && request.admin.length > 0 && (
+          <p className="modal-body">
+            Windows will ask for administrator permission once, to clean{" "}
+            {request.admin.join(", ")}. Jharu itself keeps running without it.
           </p>
         )}
 

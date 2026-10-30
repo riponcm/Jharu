@@ -118,7 +118,7 @@ fn specs() -> Vec<Spec> {
 }
 
 fn dir_size(path: &std::path::Path) -> u64 {
-    jwalk::WalkDir::new(path)
+    crate::walk::walk(path)
         .skip_hidden(false)
         .into_iter()
         .flatten()

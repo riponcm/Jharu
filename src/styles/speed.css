@@ -1,0 +1,147 @@
+/* Speed tab: live load summary and the task killer. Uses the app's colour
+   tokens (App.css), so both themes work. */
+
+.sp-summary {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.sp-tile {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 11px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  min-width: 0;
+}
+
+.sp-value {
+  font-size: 20px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+}
+
+.sp-value-sm {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  font-size: 14.5px;
+}
+
+.sp-meter {
+  height: 6px;
+  border-radius: 3px;
+  background: var(--surface-2);
+  overflow: hidden;
+}
+
+.sp-meter-fill {
+  height: 100%;
+  border-radius: 3px;
+  background: var(--accent);
+  /* Slightly longer than the refresh, so the bar glides instead of jumping. */
+  transition: width 0.6s ease;
+}
+
+.sp-meter-fill.is-warm { background: #ba7517; }
+.sp-meter-fill.is-hot { background: var(--danger); }
+
+.filter-row .filter-tabs + .filter-tabs {
+  margin-left: auto;
+}
+
+.sp-row {
+  align-items: flex-start;
+  cursor: default;
+}
+
+.sp-row.is-protected .finding-name {
+  color: var(--text-2);
+}
+
+.sp-sub {
+  font-size: 12.5px;
+  color: var(--text-2);
+  overflow-wrap: anywhere;
+}
+
+.sp-nums {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 18px;
+  font-size: 12.5px;
+  color: var(--text-2);
+  font-variant-numeric: tabular-nums;
+}
+
+.sp-nums b {
+  color: var(--text);
+  font-weight: 600;
+}
+
+.sp-inline {
+  font-size: 12px;
+  color: var(--text-3);
+  margin: 2px 0 0;
+}
+
+.sp-why {
+  align-self: flex-start;
+  border: none;
+  background: none;
+  padding: 0;
+  margin-top: 2px;
+  font-size: 12px;
+  color: var(--accent);
+  cursor: pointer;
+}
+
+.sp-why:hover {
+  text-decoration: underline;
+}
+
+.sp-result {
+  font-size: 12.5px;
+  margin: 4px 0 0;
+  padding: 6px 10px;
+  border-radius: 8px;
+  background: var(--surface-2);
+  color: var(--text);
+  line-height: 1.45;
+}
+
+.sp-result.is-failed {
+  background: var(--danger-bg);
+  color: var(--danger);
+}
+
+.sp-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+  min-width: 96px;
+}
+
+.sp-note {
+  font-size: 12px;
+  color: var(--text-3);
+  max-width: 150px;
+  text-align: right;
+  line-height: 1.4;
+}
+
+.sp-dismiss {
+  margin-left: 10px;
+}
+
+@media (max-width: 760px) {
+  .filter-row .filter-tabs + .filter-tabs {
+    margin-left: 0;
+  }
+}

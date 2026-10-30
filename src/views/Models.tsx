@@ -70,7 +70,7 @@ export default function Models({ onRecovered }: { onRecovered: (bytes: number) =
     setConfirming(false);
     try {
       const paths = selectedModels.flatMap((m) => m.paths);
-      const outcome = await invoke<CleanOutcome>("clean_paths", { paths });
+      const outcome = await invoke<CleanOutcome>("clean_paths", { paths, source: "ML models" });
       if (outcome.errors.length) setError(outcome.errors.join("; "));
       onRecovered(outcome.freed_bytes);
       await scan();

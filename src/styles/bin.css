@@ -1,0 +1,77 @@
+/* Recycle Bin tab. Colours and spacing reuse the app's tokens from App.css. */
+
+.bin-empty-panel {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 14px 16px;
+  margin-bottom: 16px;
+}
+
+.bin-empty-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.bin-empty-head .section-title {
+  margin: 0;
+}
+
+.bin-days {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: var(--text-2);
+}
+
+.bin-days input {
+  width: 72px;
+  padding: 5px 8px;
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  background: var(--bg);
+  color: var(--text);
+  font: inherit;
+}
+
+.bin-empty-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 12px 0 8px;
+}
+
+.bin-row {
+  align-items: flex-start;
+  cursor: default;
+}
+
+.bin-row > .btn,
+.bin-row > .btn-ghost {
+  margin-top: 3px;
+}
+
+.bin-more {
+  display: flex;
+  justify-content: center;
+  margin-top: 12px;
+}
+
+.bin-progress .meter-track {
+  margin: 6px 0;
+}
+
+.bin-list-plain {
+  margin: 4px 0 0;
+  padding-left: 18px;
+  font-size: 12.5px;
+}
+
+.btn.sm {
+  padding: 3px 10px;
+  font-size: 12.5px;
+}

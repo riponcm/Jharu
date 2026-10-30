@@ -80,7 +80,7 @@ export default function Desktop({ onRecovered }: { onRecovered: (bytes: number) 
     setWorking(true);
     setConfirmTrash(false);
     try {
-      const outcome = await invoke<CleanOutcome>("clean_paths", { paths: [...selected] });
+      const outcome = await invoke<CleanOutcome>("clean_paths", { paths: [...selected], source: "Desktop" });
       if (outcome.errors.length) setError(outcome.errors.join("; "));
       onRecovered(outcome.freed_bytes);
       await scan();

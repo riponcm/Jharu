@@ -16,8 +16,10 @@ jobs:
         include:
           - platform: macos-latest
             args: "--target universal-apple-darwin"
+          # Signed with Azure Artifact Signing (account matily-signing,
+          # profile matily-public); local builds stay unsigned.
           - platform: windows-latest
-            args: ""
+            args: "--config src-tauri/release-signing.json"
 
     runs-on: ${{ matrix.platform }}
 
@@ -39,11 +41,46 @@ jobs:
 
       - run: npm ci
 
+      - name: Install the Windows signing tool
+        if: matrix.platform == 'windows-latest'
+        run: cargo install trusted-signing-cli --locked
+
+      # Signs and notarizes the Mac build with the Developer ID certificate.
+      # The values are passed on only when the secrets exist: an empty
+      # APPLE_CERTIFICATE would make the bundler fail instead of skipping.
+      - name: Apple signing and notarization
+        if: matrix.platform == 'macos-latest'
+        env:
+          APPLE_CERTIFICATE: ${{ secrets.APPLE_CERTIFICATE }}
+          APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
+          APPLE_SIGNING_IDENTITY: ${{ secrets.APPLE_SIGNING_IDENTITY }}
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_PASSWORD: ${{ secrets.APPLE_PASSWORD }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+        run: |
+          if [ -z "$APPLE_CERTIFICATE" ]; then
+            echo "::warning::No Apple signing secrets; the Mac build will be unsigned."
+            exit 0
+          fi
+          # A pasted certificate may carry line breaks; base64 must not.
+          cert=$(printf '%s' "$APPLE_CERTIFICATE" | tr -d ' \r\n')
+          # No longer the stored secret, so GitHub would not hide it in logs.
+          echo "::add-mask::$cert"
+          echo "APPLE_CERTIFICATE=$cert" >> "$GITHUB_ENV"
+          for v in APPLE_CERTIFICATE_PASSWORD APPLE_SIGNING_IDENTITY APPLE_ID APPLE_PASSWORD APPLE_TEAM_ID; do
+            printf '%s=%s\n' "$v" "$(printf '%s' "${!v}" | tr -d '\r\n')" >> "$GITHUB_ENV"
+          done
+
       - uses: tauri-apps/tauri-action@v0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
           TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ""
+          # The app registration matily-release-signing, which may sign
+          # with the matily-public certificate profile.
+          AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+          AZURE_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
+          AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
         with:
           tagName: ${{ github.ref_name }}
           releaseName: "Jharu ${{ github.ref_name }}"

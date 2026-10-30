@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import { formatBytes, isWindows } from "../format";
 import type { DriveInfo, Forecast, HealthReport } from "../types";
+import ForecastNote from "../components/ForecastNote";
 
 function Donut({ pct }: { pct: number }) {
   const r = 52;
@@ -215,6 +216,7 @@ export default function DriveHealth() {
                 ) : (
                   <p className="view-sub">No readings recorded yet.</p>
                 )}
+                <ForecastNote mount={d.mount} />
               </div>
 
               <div className="health-panel">

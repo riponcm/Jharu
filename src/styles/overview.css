@@ -1,0 +1,457 @@
+/* Overview page. Safety colours match the rating badges elsewhere; the
+   folder-map hues are App.css's category set. Everything animates once, on
+   open, and respects reduced motion. */
+
+:root {
+  --ov-safe: #1d9e75;
+  --ov-caution: #ba7517;
+  --ov-risky: #e24b4a;
+  --ov-mem: #378add;
+  --ov-star: #ba7517;
+  --ov-star-bg: #fad58c;
+  --ov-star-edge: #e3a842;
+  --ov-star-text: #633806;
+  --ov-star-sub: #854f0b;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --ov-safe: #5dcaa5;
+    --ov-caution: #ef9f27;
+    --ov-risky: #f09595;
+    --ov-mem: #85b7eb;
+    --ov-star: #fac775;
+    --ov-star-bg: #412402;
+    --ov-star-edge: #854f0b;
+    --ov-star-text: #fac775;
+    --ov-star-sub: #ef9f27;
+  }
+}
+
+.ov-mono {
+  font-family: ui-monospace, "Cascadia Mono", Consolas, monospace;
+  font-variant-numeric: tabular-nums;
+}
+
+.ov-k {
+  font-size: 12px;
+  color: var(--text-2);
+}
+
+.ov-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+.ov-card-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+
+.ov-tiles {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.ov-big {
+  font-size: 24px;
+  font-weight: 600;
+  line-height: 1.15;
+}
+
+.ov-live {
+  display: flex;
+  gap: 14px;
+  font-size: 17px;
+  font-weight: 600;
+}
+
+.t-safe-text {
+  color: var(--ov-safe);
+}
+
+.ov-spark {
+  width: 100%;
+  height: 24px;
+  overflow: visible;
+}
+
+.ov-spark polyline {
+  fill: none;
+  stroke-width: 1.6;
+  vector-effect: non-scaling-stroke;
+}
+
+.ov-spark.t-caution polyline { stroke: var(--ov-caution); }
+.ov-spark.t-mem polyline { stroke: var(--ov-mem); }
+.ov-spark.t-safe rect { fill: var(--ov-safe); }
+.ov-spark rect.is-empty { fill: var(--surface-2); }
+
+.ov-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr);
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+/* ---- drives ---- */
+
+.ov-drives {
+  display: flex;
+  justify-content: space-around;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.ov-drive {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1px;
+  min-width: 90px;
+}
+
+.ov-ring-track,
+.ov-ring-fill {
+  fill: none;
+  stroke-width: 8;
+}
+
+.ov-ring-track {
+  stroke: var(--surface-2);
+}
+
+.ov-ring-fill {
+  stroke-linecap: round;
+  animation: ov-sweep 1.2s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+}
+
+.ov-ring.t-safe .ov-ring-fill { stroke: var(--ov-safe); }
+.ov-ring.t-caution .ov-ring-fill { stroke: var(--ov-caution); }
+.ov-ring.t-risky .ov-ring-fill { stroke: var(--ov-risky); }
+
+.ov-ring-text {
+  fill: var(--text);
+  font-size: 15px;
+  font-weight: 600;
+}
+
+@keyframes ov-sweep {
+  from {
+    stroke-dashoffset: var(--ring-c);
+  }
+}
+
+/* ---- cleanable ---- */
+
+.ov-sources {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.ov-source {
+  display: grid;
+  grid-template-columns: 120px 1fr 72px;
+  align-items: center;
+  gap: 10px;
+  border: none;
+  background: none;
+  padding: 5px 6px;
+  margin: 0 -6px;
+  border-radius: 8px;
+  text-align: left;
+  font-size: 13px;
+}
+
+.ov-source:hover {
+  background: var(--surface-2);
+}
+
+.ov-source-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ov-source-size {
+  text-align: right;
+  font-size: 12.5px;
+}
+
+.ov-stack {
+  display: flex;
+  height: 9px;
+  border-radius: 5px;
+  overflow: hidden;
+  background: var(--surface-2);
+  transform-origin: left;
+  animation: ov-grow 0.9s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+}
+
+.ov-stack i,
+.ov-legend i {
+  display: block;
+}
+
+.s-safe { background: var(--ov-safe); }
+.s-caution { background: var(--ov-caution); }
+.s-risky { background: var(--ov-risky); }
+
+@keyframes ov-grow {
+  from {
+    transform: scaleX(0);
+  }
+}
+
+.ov-legend {
+  display: flex;
+  gap: 14px;
+  font-size: 12px;
+  color: var(--text-2);
+  margin-top: 4px;
+}
+
+.ov-legend span {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.ov-legend i {
+  width: 9px;
+  height: 9px;
+  border-radius: 2px;
+}
+
+/* ---- folder map ---- */
+
+.ov-map {
+  position: relative;
+  height: 150px;
+  border-radius: 8px;
+  overflow: hidden;
+  cursor: pointer;
+}
+
+.ov-map-box {
+  position: absolute;
+  box-sizing: border-box;
+  border: 2px solid var(--surface);
+  border-radius: 6px;
+  padding: 5px 7px;
+  font-size: 11.5px;
+  line-height: 1.25;
+  color: #fff;
+  overflow: hidden;
+  animation: ov-fade 0.8s ease both;
+}
+
+.ov-map-box b {
+  font-weight: 600;
+}
+
+.ov-map-box.c0 { background: var(--c-user); }
+.ov-map-box.c1 { background: var(--c-ml); }
+.ov-map-box.c2 { background: var(--c-app); }
+.ov-map-box.c3 { background: var(--c-dev); }
+.ov-map-box.c4 { background: #993556; }
+.ov-map-box.c5 { background: #0f6e56; }
+.ov-map-box.cx { background: var(--c-real); }
+
+@keyframes ov-fade {
+  from {
+    opacity: 0;
+  }
+}
+
+.ov-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 10px;
+  font-size: 13px;
+  color: var(--text-2);
+  padding: 8px 0;
+}
+
+/* ---- recent ---- */
+
+.ov-recent {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 13px;
+}
+
+.ov-recent li {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.ov-recent-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ---- actions ---- */
+
+.ov-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 8px;
+}
+
+.ov-primary {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--surface);
+}
+
+.ov-primary:hover:not(:disabled) {
+  background: var(--accent);
+  filter: brightness(1.08);
+}
+
+/* ---- GitHub card ---- */
+
+.ov-star {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 12px 14px 12px 16px;
+  margin-bottom: 12px;
+  border-radius: 12px;
+  background: var(--ov-star-bg);
+  color: var(--ov-star-text);
+  border: 1px solid var(--ov-star-edge);
+  animation: ov-rise 0.6s ease both;
+}
+
+.ov-star-icon {
+  flex: none;
+  fill: none;
+  stroke: var(--ov-star);
+  stroke-width: 1.5;
+  stroke-linejoin: round;
+  animation: ov-twinkle 2.6s ease-in-out infinite;
+}
+
+.ov-star-text {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: 13px;
+}
+
+.ov-star-text strong {
+  font-size: 15px;
+}
+
+.ov-star-text span {
+  color: var(--ov-star-sub);
+}
+
+.ov-star-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: transparent;
+  border: 1px solid color-mix(in srgb, var(--ov-star-text) 30%, transparent);
+  color: var(--ov-star-text);
+  font-weight: 500;
+  padding: 6px 14px;
+}
+
+.ov-star-btn:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--ov-star-text) 8%, transparent);
+}
+
+.ov-star-btn svg {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.4;
+}
+
+.ov-star-btn svg.is-filled {
+  fill: currentColor;
+  stroke: none;
+}
+
+.ov-x {
+  border: none;
+  background: none;
+  padding: 6px;
+  color: inherit;
+  display: inline-flex;
+}
+
+.ov-x path {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.6;
+  stroke-linecap: round;
+}
+
+@keyframes ov-twinkle {
+  0%,
+  100% {
+    transform: scale(1) rotate(0deg);
+  }
+  50% {
+    transform: scale(1.15) rotate(14deg);
+  }
+}
+
+@keyframes ov-rise {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+}
+
+.ov-rise {
+  animation: ov-rise 0.5s ease both;
+}
+
+.ov-tiles .ov-rise:nth-child(2) { animation-delay: 0.05s; }
+.ov-tiles .ov-rise:nth-child(3) { animation-delay: 0.1s; }
+.ov-tiles .ov-rise:nth-child(4) { animation-delay: 0.15s; }
+
+@media (max-width: 980px) {
+  .ov-tiles {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .ov-row {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ov-ring-fill,
+  .ov-stack,
+  .ov-map-box,
+  .ov-star,
+  .ov-star-icon,
+  .ov-rise {
+    animation: none;
+  }
+}

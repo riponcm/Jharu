@@ -1,0 +1,123 @@
+/* The window's title bar: page name, two shortcuts, window controls. It
+   sits over the content column only; the sidebar keeps the full height. */
+
+.titlebar {
+  height: 40px;
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding-left: 28px;
+  background: var(--bg);
+  border-bottom: 1px solid var(--border);
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+/* macOS: the window keeps its traffic lights, overlaid on the top of the
+   sidebar. This band reserves their space at the same 40px height as the
+   title bar, so the two read as one bar across the window. */
+html.platform-mac .sidebar {
+  padding-top: 56px;
+}
+
+.mac-lights {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 40px;
+  border-bottom: 1px solid var(--border);
+}
+
+.tb-title {
+  flex: 1;
+  align-self: stretch;
+  display: flex;
+  align-items: center;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-2);
+}
+
+.tb-tools {
+  display: flex;
+  gap: 2px;
+}
+
+.titlebar button {
+  border: none;
+  background: none;
+  padding: 0;
+  border-radius: 0;
+  color: var(--text-2);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.titlebar path {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.3;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.tb-icon {
+  width: 32px;
+  height: 30px;
+  border-radius: 8px !important;
+}
+
+.tb-icon:hover {
+  background: var(--surface-2) !important;
+  color: var(--text);
+}
+
+.tb-icon.is-on {
+  color: var(--accent);
+}
+
+.tb-controls {
+  display: flex;
+  align-self: stretch;
+  margin-left: 6px;
+}
+
+.tb-ctl {
+  width: 46px;
+  height: 100%;
+}
+
+.tb-ctl:hover {
+  background: var(--surface-2) !important;
+  color: var(--text);
+}
+
+.tb-ctl.is-close:hover {
+  background: #c42b1c !important;
+  color: #fff;
+}
+
+/* The window scrolls the content column, not the page, so the title bar
+   and the sidebar stay put. */
+.shell {
+  height: 100vh;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.main-col {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+  height: 100vh;
+}
+
+.content-scroll {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+}

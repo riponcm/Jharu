@@ -471,8 +471,27 @@ button:disabled {
 .nav {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 10px;
   flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  margin: 0 -6px;
+  padding: 0 6px;
+}
+
+.nav-group {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.nav-group-title {
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-3);
+  padding: 0 10px 2px;
 }
 
 .nav-item {
@@ -482,7 +501,7 @@ button:disabled {
   border: none;
   background: none;
   text-align: left;
-  padding: 9px 10px;
+  padding: 6px 10px;
   border-radius: 10px;
 }
 
@@ -616,8 +635,20 @@ button:disabled {
   padding: 9px 14px;
 }
 
-.deep-row + .deep-row {
+.deep-item + .deep-item {
   border-top: 1px solid var(--border);
+}
+
+/* Why a Deep clean row has its rating, under the row. Doubled class so it
+   wins over .safety-reasons, which is defined later. */
+.safety-reasons.deep-why {
+  margin: -4px 0 0;
+  padding: 0 14px 9px 38px;
+}
+
+.deep-what {
+  font-weight: 600;
+  color: var(--text);
 }
 
 .deep-row.is-protected {
@@ -975,47 +1006,6 @@ button:disabled {
   font-size: 12px;
 }
 
-.treemap {
-  display: block;
-  border-radius: 12px;
-  overflow: hidden;
-  background: var(--surface);
-  border: 1px solid var(--border);
-}
-
-.tm-cell {
-  cursor: pointer;
-}
-
-.tm-cell.is-protected {
-  cursor: default;
-}
-
-.tm-fill {
-  transition: opacity 0.12s ease;
-}
-
-.tm-cell:hover .tm-fill {
-  opacity: 0.82;
-}
-
-.tm-cell.is-protected .tm-fill {
-  opacity: 0.5;
-}
-
-.tm-name {
-  font-size: 13px;
-  font-weight: 600;
-  fill: #ffffff;
-  pointer-events: none;
-}
-
-.tm-size {
-  font-size: 12px;
-  fill: rgba(255, 255, 255, 0.88);
-  pointer-events: none;
-}
-
 .modal-backdrop {
   position: fixed;
   inset: 0;
@@ -1166,6 +1156,46 @@ button:disabled {
 .model-meta {
   font-size: 11.5px;
   color: var(--text-3);
+}
+
+.wt-row {
+  align-items: flex-start;
+}
+
+.wt-row > input,
+.wt-row > .btn-ghost {
+  margin-top: 3px;
+}
+
+.wt-row.is-locked {
+  cursor: default;
+}
+
+.wt-repo-sub {
+  margin: -6px 0 10px;
+  font-size: 12px;
+}
+
+.wt-explain {
+  font-size: 12.5px;
+  color: var(--text-2);
+  line-height: 1.5;
+  margin: 2px 0 0;
+}
+
+.wt-reasons {
+  margin: 4px 0 0;
+  padding-left: 18px;
+  font-size: 12.5px;
+  color: var(--danger);
+}
+
+.banner-info .wt-reasons {
+  color: var(--text-2);
+}
+
+.wt-progress .meter-track {
+  margin: 6px 0;
 }
 
 .dup-row {
@@ -1323,6 +1353,49 @@ button:disabled {
   align-items: center;
   justify-content: flex-end;
   gap: 6px;
+}
+
+/* Progress and the result of a clean, shown inside the card it started from. */
+.junk-status {
+  padding: 0 16px;
+}
+
+.junk-status .banner-info {
+  margin: 4px 0 10px;
+}
+
+/* Why a Dev clean finding has its rating: one line per question answered. */
+.safety-reasons {
+  list-style: none;
+  margin: 6px 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: 12.5px;
+  color: var(--text-2);
+  line-height: 1.45;
+}
+
+.safety-reasons li {
+  display: flex;
+  gap: 6px;
+}
+
+.reason-mark {
+  flex: none;
+  width: 12px;
+  font-weight: 700;
+  text-align: center;
+}
+
+.reason-ok .reason-mark { color: var(--c-dev); }
+.reason-warn .reason-mark { color: #ba7517; }
+.reason-bad .reason-mark,
+.reason-bad { color: var(--danger); }
+
+.deep-item + .deep-row {
+  border-top: 1px solid var(--border);
 }
 
 .map-scanning {

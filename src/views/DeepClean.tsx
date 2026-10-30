@@ -4,7 +4,7 @@ import { listen, type UnlistenFn } from "@tauri-apps/api/event";
 import { formatBytes, isWindows } from "../format";
 import ConfirmClean from "../components/ConfirmClean";
 import Treemap from "../components/Treemap";
-import type { CleanOutcome, DeepEntry } from "../types";
+import type { CleanOutcome, DeepEntry, Verdict } from "../types";
 
 const KIND_LABEL: Record<DeepEntry["kind"], string> = {
   system: "System",
@@ -16,6 +16,19 @@ const KIND_LABEL: Record<DeepEntry["kind"], string> = {
 };
 
 const ROOT = "__root__";
+
+function verdictLabel(v: Verdict): string {
+  if (v.basis === "unknown") return "Unknown — look inside";
+  if (v.safety === "safe") return "Safe to remove";
+  if (v.safety === "caution") return "Remove with care";
+  return "Review first";
+}
+
+const BASIS_HINT: Record<Verdict["basis"], string> = {
+  known: "Jharu knows this location.",
+  detected: "Judged from what the folder contains.",
+  unknown: "Jharu does not recognise this folder.",
+};
 
 export default function DeepClean({ onRecovered }: { onRecovered: (bytes: number) => void }) {
   const [crumbs, setCrumbs] = useState<string[]>([]);
@@ -32,6 +45,10 @@ export default function DeepClean({ onRecovered }: { onRecovered: (bytes: number
   const scan = async (path: string | null, force = false) => {
     const key = path ?? ROOT;
     if (!force && cache.current.has(key)) {
+      // Leaving a level that is still being measured: stop listening to it,
+      // or its rows would land in this list and "Measuring…" would stay up.
+      activeToken.current = "";
+      setScanning(false);
       setEntries(cache.current.get(key)!);
       return;
     }
@@ -83,7 +100,7 @@ export default function DeepClean({ onRecovered }: { onRecovered: (bytes: number
   const clean = async (entry: DeepEntry) => {
     setConfirming(null);
     try {
-      const outcome = await invoke<CleanOutcome>("clean_paths", { paths: [entry.path] });
+      const outcome = await invoke<CleanOutcome>("clean_paths", { paths: [entry.path], source: "Deep clean" });
       if (outcome.errors.length) setError(outcome.errors.join("; "));
       onRecovered(outcome.freed_bytes);
       const key = currentPath ?? ROOT;
@@ -98,11 +115,9 @@ export default function DeepClean({ onRecovered }: { onRecovered: (bytes: number
   const reveal = (path: string) =>
     invoke("reveal_path", { path }).catch((e) => setError(String(e)));
 
-  // A folder we could not fully read reports a size that is only a floor. Where
-  // nothing at all could be read it measures 0 B, and a 0 B block cannot be
-  // drawn — those have to be named explicitly or they simply vanish.
-  const unreadable = entries.filter((e) => e.read_error);
-  const undrawable = unreadable.filter((e) => e.size_bytes === 0);
+  // A folder Jharu could not read measures less than it holds, maybe 0 B, so
+  // the map draws it small or not at all: name it rather than let it vanish.
+  const unreadable = entries.filter((e) => e.unreadable > 0);
   const maxSize = entries.length ? Math.max(...entries.map((e) => e.size_bytes)) : 1;
   const totalSize = entries.reduce((a, e) => a + e.size_bytes, 0);
 
@@ -115,7 +130,7 @@ export default function DeepClean({ onRecovered }: { onRecovered: (bytes: number
             title: `Move ${confirming.name} to the Trash?`,
             items: [confirming.path],
             bytes: confirming.size_bytes,
-            risky: confirming.kind === "user_data" || confirming.kind === "app_data",
+            risky: confirming.verdict ? confirming.verdict.safety !== "safe" : true,
           }}
           onConfirm={() => clean(confirming)}
           onCancel={() => setConfirming(null)}
@@ -152,7 +167,9 @@ export default function DeepClean({ onRecovered }: { onRecovered: (bytes: number
           </span>
         ))}
         <span className="crumb-total">
-          {scanning ? "Measuring…" : `${formatBytes(totalSize)} in ${entries.length} items`}
+          {scanning
+            ? "Measuring…"
+            : `${formatBytes(totalSize)} in ${entries.filter((e) => !e.is_virtual).length} items`}
         </span>
       </div>
 
@@ -160,50 +177,48 @@ export default function DeepClean({ onRecovered }: { onRecovered: (bytes: number
         <div className="filter-tabs">
           <button
             className={`filter-tab ${mode === "map" ? "is-active" : ""}`}
+            aria-pressed={mode === "map"}
             onClick={() => setMode("map")}
           >
             Map
           </button>
           <button
             className={`filter-tab ${mode === "list" ? "is-active" : ""}`}
+            aria-pressed={mode === "list"}
             onClick={() => setMode("list")}
           >
             List
           </button>
         </div>
-        <div className="legend" style={{ margin: 0 }}>
-          {[
-            ["kindfill-user_data", "Your files"],
-            ["kindfill-applications", "Apps"],
-            ["kindfill-app_data", "App data"],
-            ["kindfill-dev", "Dev / config"],
-            ["kindfill-system", "System"],
-          ].map(([cls, label]) => (
-            <span key={label} className="legend-item">
-              <i className={`dot ${cls}`} />
-              {label}
-            </span>
-          ))}
-        </div>
+        {mode === "list" && (
+          <div className="legend" style={{ margin: 0 }}>
+            {[
+              ["kindfill-user_data", "Your files"],
+              ["kindfill-applications", "Apps"],
+              ["kindfill-app_data", "App data"],
+              ["kindfill-dev", "Dev / config"],
+              ["kindfill-system", "System"],
+            ].map(([cls, label]) => (
+              <span key={label} className="legend-item">
+                <i className={`dot ${cls}`} />
+                {label}
+              </span>
+            ))}
+          </div>
+        )}
       </div>
 
       {mode === "map" && entries.length > 0 && (
         <>
-          {unreadable.length > 0 && (
+          {unreadable.length > 0 && !scanning && (
             <div className="banner-info">
-              {unreadable.length} folder{unreadable.length === 1 ? "" : "s"} could not be read in
-              full, so the size shown is a floor rather than the real total:{" "}
-              <strong>{unreadable.map((e) => e.name).join(", ")}</strong>.
-              {undrawable.length > 0 && (
-                <>
-                  {" "}
-                  {undrawable.length} of {unreadable.length === 1 ? "them" : "those"} measured 0 B
-                  and {undrawable.length === 1 ? "is" : "are"} not drawn on the map at all.
-                </>
-              )}{" "}
+              Jharu could not read everything in {unreadable.length} folder
+              {unreadable.length === 1 ? "" : "s"}, so {unreadable.length === 1 ? "it is" : "they are"}{" "}
+              smaller on the map than on disk, or missing from it:{" "}
+              <strong>{unreadable.map((e) => e.name).join(", ")}</strong>.{" "}
               {isWindows
-                ? "Run Jharu as an administrator to measure them properly."
-                : "Grant Full Disk Access in System Settings → Privacy and Security to measure them properly."}
+                ? "Run Jharu as an administrator to measure them."
+                : "Grant Full Disk Access in System Settings → Privacy and Security to measure them."}
             </div>
           )}
           {scanning && (
@@ -214,9 +229,10 @@ export default function DeepClean({ onRecovered }: { onRecovered: (bytes: number
           )}
           <Treemap entries={entries} onOpen={navigate} />
           <p className="footnote">
-            Each block is a folder, sized by what it holds. Click a block to go inside it.
-            Blocks smaller than a fraction of a percent are left off the map — switch to List to see
-            everything.
+            Each block is a folder, sized by what it holds and coloured by how safe it is to remove,
+            the same rating the List shows. Click a block (or Tab to it and press Enter) to go inside.
+            Hatched grey stands for items too small to draw — switch to List to see everything and to
+            clean.
           </p>
         </>
       )}
@@ -224,7 +240,8 @@ export default function DeepClean({ onRecovered }: { onRecovered: (bytes: number
       {mode === "list" && (
       <div className="deep-list">
         {entries.map((e) => (
-          <div key={e.path} className={`deep-row ${e.protected ? "is-protected" : ""}`}>
+          <div key={e.path} className="deep-item">
+          <div className={`deep-row ${e.protected ? "is-protected" : ""}`}>
             <button
               className="deep-name"
               onClick={() => navigate(e)}
@@ -234,11 +251,44 @@ export default function DeepClean({ onRecovered }: { onRecovered: (bytes: number
               <span className="deep-icon">{e.is_dir ? "▸" : "·"}</span>
               {e.name}
             </button>
-            <span className={`badge kind-${e.kind}`}>{KIND_LABEL[e.kind]}</span>
-            {e.protected && <span className="badge safety-risky">Protected</span>}
-            {e.read_error && (
-              <span className="badge safety-risky" title={e.read_error}>
+            {e.verdict ? (
+              <span
+                className={`badge safety-${e.verdict.basis === "unknown" ? "caution" : e.verdict.safety}`}
+                title={`${BASIS_HINT[e.verdict.basis]} ${e.verdict.reasons.map((r) => r.text).join(" ")}`}
+              >
+                {verdictLabel(e.verdict)}
+              </span>
+            ) : (
+              <span className={`badge kind-${e.kind}`}>{KIND_LABEL[e.kind]}</span>
+            )}
+            {e.protected && !e.is_virtual && <span className="badge safety-risky">Protected</span>}
+            {e.is_virtual && (
+              <span className="badge stale" title={e.hint}>
+                Needs admin to see
+              </span>
+            )}
+            {e.unreadable > 0 && (
+              <span
+                className="badge stale"
+                title={`${e.unreadable.toLocaleString()} ${e.unreadable === 1 ? "item" : "items"} inside could not be read, so the size shown is less than the folder holds.`}
+              >
                 Partly unreadable
+              </span>
+            )}
+            {e.online_only_bytes >= 1e8 && (
+              <span
+                className="badge cat-dev_cache"
+                title="Cloud files (OneDrive, iCloud) that are listed here but stored only online. They use no space on this disk and are not in the size shown."
+              >
+                +{formatBytes(e.online_only_bytes)} online-only
+              </span>
+            )}
+            {e.shared_bytes >= 1e8 && (
+              <span
+                className="badge stale"
+                title="Files here that are hard links to files already counted in another folder, so they take no extra space and are not in the size shown. Removing only this folder would not free them."
+              >
+                +{formatBytes(e.shared_bytes)} shared
               </span>
             )}
             <div className="deep-bar">
@@ -248,13 +298,31 @@ export default function DeepClean({ onRecovered }: { onRecovered: (bytes: number
               />
             </div>
             <span className="deep-size">{formatBytes(e.size_bytes)}</span>
-            <span className="deep-files">{e.file_count.toLocaleString()} files</span>
+            <span className="deep-files">
+              {e.is_virtual ? "" : `${e.file_count.toLocaleString()} files`}
+            </span>
             <div className="finding-actions">
-              <button className="btn-ghost sm" onClick={() => reveal(e.path)}>Show</button>
-              {!e.protected && (
+              {!e.is_virtual && (
+                <button className="btn-ghost sm" onClick={() => reveal(e.path)}>Show</button>
+              )}
+              {!e.protected && (e.verdict?.clean_here ?? true) && (
                 <button className="btn-clean sm" onClick={() => setConfirming(e)}>Clean</button>
               )}
             </div>
+          </div>
+          {e.verdict && (
+            <ul className="safety-reasons deep-why">
+              {e.verdict.what && <li className="deep-what">{e.verdict.what}</li>}
+              {e.verdict.reasons.map((r) => (
+                <li key={r.text} className={`reason-${r.level}`}>
+                  <span className="reason-mark" aria-hidden>
+                    {r.level === "ok" ? "✓" : r.level === "warn" ? "!" : "✕"}
+                  </span>
+                  {r.text}
+                </li>
+              ))}
+            </ul>
+          )}
           </div>
         ))}
         {scanning && (

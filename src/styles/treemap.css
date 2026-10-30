@@ -1,0 +1,235 @@
+/* Disk map for Deep clean. Boxes are coloured by safety verdict, not by kind:
+   the question the map answers is "what here can I act on", and colour alone
+   never carries it (every box that is large enough also prints the verdict). */
+
+.tm-scope {
+  /* Light theme: dark fills, white ink (all >= 5:1). */
+  --tm-safe: #2e7d32;
+  --tm-caution: #9a5b00;
+  --tm-risky: #b3261e;
+  --tm-unknown: #4a6178;
+  --tm-protected: #3a3935;
+  --tm-ink: #ffffff;
+  --tm-ink-soft: rgba(255, 255, 255, 0.86);
+  --tm-hatch-a: #d9d7d0;
+  --tm-hatch-b: #ebe9e3;
+  --tm-hatch-ink: #1c1c1a;
+}
+
+.tm {
+  position: relative;
+  border-radius: 12px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  overflow: hidden;
+}
+
+@media (prefers-color-scheme: dark) {
+  .tm-scope {
+    /* Dark theme: light fills, dark ink (all >= 7:1), each >= 5.8:1 against the surface. */
+    --tm-safe: #6fbf73;
+    --tm-caution: #e0a23a;
+    --tm-risky: #ef8a80;
+    --tm-unknown: #8fb0cf;
+    --tm-protected: #a3a199;
+    --tm-ink: #14130f;
+    --tm-ink-soft: rgba(20, 19, 15, 0.84);
+    --tm-hatch-a: #3a3a37;
+    --tm-hatch-b: #2c2c2a;
+    --tm-hatch-ink: #ececea;
+  }
+}
+
+.tm-box {
+  position: absolute;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: flex-start;
+  gap: 1px;
+  padding: 7px 9px;
+  overflow: hidden;
+  text-align: left;
+  font: inherit;
+  color: var(--tm-ink);
+  background: var(--tm-unknown);
+  /* Opaque surface-coloured border = the gap between boxes. */
+  border: 1px solid var(--surface);
+  border-radius: 0;
+  cursor: pointer;
+  transition: filter 0.12s ease;
+}
+
+.tm-box.v-safe { background: var(--tm-safe); }
+.tm-box.v-caution { background: var(--tm-caution); }
+.tm-box.v-risky { background: var(--tm-risky); }
+.tm-box.v-unknown { background: var(--tm-unknown); }
+.tm-box.v-protected { background: var(--tm-protected); }
+
+.tm-box:hover,
+.tm-box.is-active {
+  filter: brightness(1.12);
+}
+
+.tm-box:focus-visible {
+  outline: 3px solid var(--accent);
+  outline-offset: -4px;
+  z-index: 2;
+}
+
+/* Not drillable: files, and the "smaller items" summary. */
+.tm-box.is-static {
+  cursor: default;
+}
+
+/* Summary box standing for things the map cannot show one by one. */
+.tm-box.is-virtual {
+  color: var(--tm-hatch-ink);
+  background: repeating-linear-gradient(
+    -45deg,
+    var(--tm-hatch-a) 0 6px,
+    var(--tm-hatch-b) 6px 12px
+  );
+}
+
+.tm-name,
+.tm-meta,
+.tm-tag {
+  max-width: 100%;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  pointer-events: none;
+}
+
+.tm-name {
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.25;
+}
+
+.tm-meta {
+  font-size: 12px;
+  line-height: 1.25;
+  color: var(--tm-ink-soft);
+  font-variant-numeric: tabular-nums;
+}
+
+.tm-tag {
+  margin-top: 3px;
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--tm-ink-soft);
+}
+
+/* Text on the hatching needs its own plate to stay legible. */
+.is-virtual .tm-name,
+.is-virtual .tm-meta {
+  padding: 0 4px;
+  border-radius: 3px;
+  color: var(--text);
+  background: var(--surface);
+}
+
+.tm-tip {
+  position: absolute;
+  z-index: 5;
+  width: 260px;
+  max-width: calc(100% - 8px);
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: var(--surface-2);
+  color: var(--text);
+  border: 1px solid var(--border);
+  box-shadow: 0 6px 22px rgba(0, 0, 0, 0.25);
+  font-size: 12.5px;
+  line-height: 1.4;
+  pointer-events: none;
+}
+
+.tm-tip-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  font-weight: 600;
+}
+
+.tm-tip-head span:first-child {
+  overflow-wrap: anywhere;
+}
+
+.tm-tip-size {
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+.tm-tip-verdict {
+  margin: 4px 0 2px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-2);
+}
+
+.tm-tip ul {
+  margin: 0;
+  padding-left: 16px;
+  color: var(--text-2);
+}
+
+.tm-tip-action {
+  margin-top: 6px;
+  color: var(--accent);
+  font-weight: 600;
+}
+
+.tm-empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  color: var(--text-3);
+  font-size: 13px;
+}
+
+.tm-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 16px;
+  margin-top: 10px;
+  font-size: 12px;
+  color: var(--text-2);
+}
+
+.tm-legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.tm-swatch {
+  width: 11px;
+  height: 11px;
+  border-radius: 3px;
+  background: var(--tm-unknown);
+}
+
+.tm-swatch.v-safe { background: var(--tm-safe); }
+.tm-swatch.v-caution { background: var(--tm-caution); }
+.tm-swatch.v-risky { background: var(--tm-risky); }
+.tm-swatch.v-unknown { background: var(--tm-unknown); }
+.tm-swatch.v-protected { background: var(--tm-protected); }
+
+.tm-swatch.is-virtual {
+  background: repeating-linear-gradient(-45deg, var(--tm-hatch-a) 0 3px, var(--tm-hatch-b) 3px 6px);
+  border: 1px solid var(--border);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tm-box {
+    transition: none;
+  }
+}

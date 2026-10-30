@@ -1,8 +1,39 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { invoke } from "@tauri-apps/api/core";
-import { formatBytes } from "../format";
+import { listen, type UnlistenFn } from "@tauri-apps/api/event";
+import { formatBytes, isWindows } from "../format";
 import ConfirmClean from "../components/ConfirmClean";
-import type { CleanOutcome, JunkGroup, JunkItem } from "../types";
+import type { CleanOutcome, JunkGroup, JunkItem, LocationOutcome } from "../types";
+
+const BIN = isWindows ? "Recycle Bin" : "Trash";
+
+/// Plain-language summary of a contents clean, or null when there is nothing
+/// worth saying beyond the error banner.
+function describe(o: LocationOutcome, adminLabels: string[]): string | null {
+  const parts: string[] = [];
+  if (o.moved > 0) {
+    parts.push(
+      `Moved ${o.moved.toLocaleString()} item${o.moved === 1 ? "" : "s"} (${formatBytes(o.freed_bytes)}) to the ${BIN}.`
+    );
+  }
+  if (o.left > 0) {
+    const names = o.left_names.length ? ` (${o.left_names.join(", ")}${o.left > o.left_names.length ? ", …" : ""})` : "";
+    parts.push(
+      `${o.left.toLocaleString()} ${o.left === 1 ? "item is" : "items are"} open in a running program and stayed${names}. They usually clear after a restart.`
+    );
+  }
+  if (o.recent > 0) {
+    parts.push(
+      `${o.recent.toLocaleString()} ${o.recent === 1 ? "item" : "items"} changed in the last day ${o.recent === 1 ? "was" : "were"} left alone, in case a program still needs ${o.recent === 1 ? "it" : "them"}.`
+    );
+  }
+  if (o.admin_declined) {
+    parts.push(
+      `Administrator permission was declined, so ${adminLabels.join(", ") || "the system folders"} ${adminLabels.length === 1 ? "was" : "were"} left as ${adminLabels.length === 1 ? "it was" : "they were"}.`
+    );
+  }
+  return parts.length ? parts.join(" ") : null;
+}
 
 export default function Junk({ onRecovered }: { onRecovered: (bytes: number) => void }) {
   const [groups, setGroups] = useState<JunkGroup[] | null>(null);
@@ -10,6 +41,12 @@ export default function Junk({ onRecovered }: { onRecovered: (bytes: number) => 
   const [error, setError] = useState<string | null>(null);
   const [confirming, setConfirming] = useState<string | null>(null);
   const [cleaning, setCleaning] = useState<string | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
+  // The card the last clean started from: progress and the summary show
+  // there, next to the button that was pressed, not at the top of the page.
+  const [activeGroup, setActiveGroup] = useState<string | null>(null);
+  const [progress, setProgress] = useState<{ label: string; done: number; total: number } | null>(null);
+  const activeToken = useRef<string | null>(null);
 
   const scan = async () => {
     setScanning(true);
@@ -25,22 +62,59 @@ export default function Junk({ onRecovered }: { onRecovered: (bytes: number) => 
 
   useEffect(() => {
     scan();
+    let unlisten: UnlistenFn | undefined;
+    listen<{ token: string; label: string; done: number; total: number }>("clean-progress", (event) => {
+      if (event.payload.token !== activeToken.current) return;
+      setProgress(event.payload);
+    }).then((u) => (unlisten = u));
+    return () => unlisten?.();
   }, []);
 
-  const clean = async (key: string, paths: string[]) => {
+  const clean = async (key: string, items: JunkItem[]) => {
     setCleaning(key);
+    setActiveGroup(groups?.find((g) => g.id === key || g.items.some((i) => i.path === key))?.id ?? null);
     setConfirming(null);
+    setNotice(null);
+    // Folders the system keeps using are emptied, never moved whole; plain
+    // files and folders move as one piece.
+    const locations = items.filter((i) => i.location);
+    const paths = items.filter((i) => !i.location).map((i) => i.path);
     try {
-      const outcome = await invoke<CleanOutcome>("clean_paths", { paths });
-      if (outcome.errors.length) setError(outcome.errors.join("; "));
-      onRecovered(outcome.freed_bytes);
+      const errors: string[] = [];
+      let freed = 0;
+      if (paths.length) {
+        const outcome = await invoke<CleanOutcome>("clean_paths", { paths, source: "Junk files" });
+        errors.push(...outcome.errors);
+        freed += outcome.freed_bytes;
+      }
+      if (locations.length) {
+        const token = `clean:${Math.random()}`;
+        activeToken.current = token;
+        setProgress({ label: locations[0].location!, done: 0, total: 0 });
+        const outcome = await invoke<LocationOutcome>("clean_locations", {
+          ids: locations.map((i) => i.location),
+          token,
+        });
+        errors.push(...outcome.errors);
+        freed += outcome.freed_bytes;
+        setNotice(describe(outcome, locations.filter((i) => i.needs_admin).map((i) => i.label)));
+      }
+      if (errors.length) setError(errors.join("; "));
+      onRecovered(freed);
       await scan();
     } catch (e) {
       setError(String(e));
     } finally {
+      activeToken.current = null;
+      setProgress(null);
       setCleaning(null);
     }
   };
+
+  const progressLabel = (label: string) =>
+    label === "admin"
+      ? "Waiting for the administrator helper — approve the Windows prompt if it is showing"
+      : groups?.flatMap((g) => g.items).find((i) => i.location === label)?.label ?? label;
 
   const total = groups?.filter((g) => g.cleanable).reduce((a, g) => a + g.total_bytes, 0) ?? 0;
 
@@ -50,6 +124,47 @@ export default function Junk({ onRecovered }: { onRecovered: (bytes: number) => 
     ?.flatMap((g) => g.items)
     .find((i) => i.path === confirming);
   const pendingSafe = pendingGroup?.items.filter((i) => i.safe) ?? [];
+  const pendingItems = pendingGroup ? pendingSafe : pendingItem ? [pendingItem] : [];
+  const pendingKind = pendingItems.length && pendingItems.every((i) => i.location) ? "system" : "userfile";
+  const pendingAdmin = pendingItems.filter((i) => i.needs_admin).map((i) => i.label);
+
+  const status = (
+    <>
+      {progress && (
+        <div className="banner-info wt-progress">
+          <div className="meter-head">
+            <span>{progressLabel(progress.label)}</span>
+            {progress.total > 0 && (
+              <span className="meter-value">
+                {progress.done.toLocaleString()} of {progress.total.toLocaleString()} items
+              </span>
+            )}
+          </div>
+          {progress.total > 0 && (
+            <div className="meter-track">
+              <div
+                className="meter-fill"
+                style={{
+                  width: `${Math.max(3, (progress.done / progress.total) * 100)}%`,
+                  background: "var(--accent)",
+                }}
+              />
+            </div>
+          )}
+          <p className="model-meta">
+            Folders with many small files take a while to move to the {BIN}.
+          </p>
+        </div>
+      )}
+
+      {notice && (
+        <div className="banner-info">
+          {notice}{" "}
+          <button className="btn-ghost sm" onClick={() => setNotice(null)}>Dismiss</button>
+        </div>
+      )}
+    </>
+  );
 
   return (
     <>
@@ -58,25 +173,29 @@ export default function Junk({ onRecovered }: { onRecovered: (bytes: number) => 
           request={
             pendingGroup
               ? {
-                  kind: "userfile",
+                  kind: pendingKind,
                   title: `Clean ${pendingGroup.title}?`,
                   items: pendingSafe.map((i) => i.label),
                   bytes: pendingSafe.reduce((a, i) => a + i.size_bytes, 0),
                   risky: false,
+                  admin: pendingAdmin,
                 }
               : {
-                  kind: "userfile",
-                  title: `Move ${pendingItem!.label} to the Trash?`,
+                  kind: pendingKind,
+                  title: pendingItem!.location
+                    ? `Clean out ${pendingItem!.label}?`
+                    : `Move ${pendingItem!.label} to the ${BIN}?`,
                   items: [pendingItem!.path],
                   bytes: pendingItem!.size_bytes,
                   risky: !pendingItem!.safe,
+                  admin: pendingAdmin,
                 }
           }
           busy={cleaning === confirming}
           onConfirm={() =>
             pendingGroup
-              ? clean(pendingGroup.id, pendingSafe.map((i) => i.path))
-              : clean(pendingItem!.path, [pendingItem!.path])
+              ? clean(pendingGroup.id, pendingSafe)
+              : clean(pendingItem!.path, [pendingItem!])
           }
           onCancel={() => setConfirming(null)}
         />
@@ -135,13 +254,14 @@ export default function Junk({ onRecovered }: { onRecovered: (bytes: number) => 
               {g.cleanable && safeItems.length > 0 && (
                 <button
                   className="btn-clean"
-                  disabled={cleaning === g.id}
+                  disabled={cleaning != null}
                   onClick={() => setConfirming(g.id)}
                 >
                   {cleaning === g.id ? "Cleaning…" : `Clean safe items (${formatBytes(safeTotal)})`}
                 </button>
               )}
             </div>
+            {g.id === activeGroup && <div className="junk-status">{status}</div>}
             <div className="browser-items">
               {g.items.map((i) => (
                 <div key={i.path} className="junk-item">
@@ -152,6 +272,11 @@ export default function Junk({ onRecovered }: { onRecovered: (bytes: number) => 
                     </span>
                     {i.stale_days != null && i.stale_days > 30 && (
                       <span className="badge stale">{Math.round(i.stale_days / 30)} mo old</span>
+                    )}
+                    {i.needs_admin && (
+                      <span className="badge stale" title="Windows asks for administrator permission when you clean this">
+                        Admin
+                      </span>
                     )}
                     {i.read_error && (
                       <span className="badge safety-risky" title={i.read_error}>
@@ -169,10 +294,10 @@ export default function Junk({ onRecovered }: { onRecovered: (bytes: number) => 
                   {g.cleanable && (
                     <button
                       className="btn-clean sm"
-                      disabled={cleaning === i.path}
+                      disabled={cleaning != null}
                       onClick={() => setConfirming(i.path)}
                     >
-                      Clean
+                      {cleaning === i.path ? "Cleaning…" : "Clean"}
                     </button>
                   )}
                 </div>

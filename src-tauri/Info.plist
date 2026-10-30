@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <!-- Merged into the bundle's Info.plist. Shown when macOS asks once for
+         permission to let Jharu use Finder and System Events. -->
+    <key>NSAppleEventsUsageDescription</key>
+    <string>Jharu asks Finder to move items you clean to the Trash, so you can put them back, and asks System Events which apps open at login.</string>
+</dict>
+</plist>

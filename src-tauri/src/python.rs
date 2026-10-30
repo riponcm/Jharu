@@ -50,7 +50,7 @@ fn skip_dir(name: &str) -> bool {
 }
 
 fn dir_size(path: &Path) -> u64 {
-    jwalk::WalkDir::new(path)
+    crate::walk::walk(path)
         .skip_hidden(false)
         .into_iter()
         .flatten()
@@ -62,7 +62,7 @@ fn dir_size(path: &Path) -> u64 {
 
 fn newest_mtime(path: &Path) -> Option<SystemTime> {
     let mut newest: Option<SystemTime> = None;
-    for entry in jwalk::WalkDir::new(path).max_depth(3).skip_hidden(false).into_iter().flatten() {
+    for entry in crate::walk::walk(path).max_depth(3).skip_hidden(false).into_iter().flatten() {
         if let Ok(meta) = entry.metadata() {
             if let Ok(m) = meta.modified() {
                 if newest.map_or(true, |n| m > n) {
@@ -77,7 +77,7 @@ fn newest_mtime(path: &Path) -> Option<SystemTime> {
 /// Locate every virtualenv (pyvenv.cfg) and conda env (conda-meta) under home.
 fn find_envs(home: &Path) -> Vec<(PathBuf, String)> {
     let mut envs = vec![];
-    let walker = jwalk::WalkDir::new(home)
+    let walker = crate::walk::walk(home)
         .max_depth(MAX_DEPTH)
         .skip_hidden(false)
         .process_read_dir(|_, _, _, children| {
@@ -153,7 +153,9 @@ fn package_name(entry_name: &str) -> Option<String> {
 
 #[cfg(test)]
 mod tests {
+    /// Read-only scan of this machine: `cargo test --lib smoke_find_envs -- --ignored --nocapture`
     #[test]
+    #[ignore]
     fn smoke_find_envs() {
         let home = dirs::home_dir().unwrap();
         let start = std::time::Instant::now();

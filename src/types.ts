@@ -7,14 +7,25 @@ export interface ChildEntry {
   size_bytes: number;
 }
 
+/// One line of why a finding has its rating.
+export interface Reason {
+  level: "ok" | "warn" | "bad";
+  text: string;
+}
+
 export interface Finding {
   rule_id: string;
   name: string;
   description: string;
   category: Category;
   safety: Safety;
+  reasons: Reason[];
   path: string;
   size_bytes: number;
+  /// What clearing it frees; lower when files are hard-linked from elsewhere.
+  reclaimable_bytes: number;
+  /// False while reclaimable_bytes is only the scan's quick upper bound.
+  reclaimable_exact: boolean;
   file_count: number;
   stale_days: number | null;
   children: ChildEntry[];
@@ -41,7 +52,26 @@ export interface DeepEntry {
   kind: "system" | "applications" | "user_data" | "app_data" | "dev" | "other";
   protected: boolean;
   hint: string;
-  read_error: string | null;
+  /// Cloud files stored only online; not part of size_bytes.
+  online_only_bytes: number;
+  /// Hard links to files counted in an earlier folder; not part of size_bytes.
+  shared_bytes: number;
+  /// Folders and files inside that could not be read; above 0 the size is a floor.
+  unreadable: number;
+  /// A summary row (space in use that could not be measured), not a folder.
+  is_virtual: boolean;
+  /// Whether removing it is safe and why; null when it cannot be removed here.
+  verdict: Verdict | null;
+}
+
+export interface Verdict {
+  safety: Safety;
+  /// How sure: a known location, detected from contents, or unrecognised.
+  basis: "known" | "detected" | "unknown";
+  what: string | null;
+  reasons: Reason[];
+  /// False where another tab cleans it properly (Temp, installed programs).
+  clean_here: boolean;
 }
 
 export interface BrowserItem {
@@ -75,6 +105,19 @@ export interface JunkItem {
   stale_days: number | null;
   safe: boolean;
   read_error: string | null;
+  /// Set for folders the system keeps using: only their contents are cleaned.
+  location: string | null;
+  needs_admin: boolean;
+}
+
+export interface LocationOutcome {
+  freed_bytes: number;
+  moved: number;
+  left: number;
+  left_names: string[];
+  recent: number;
+  admin_declined: boolean;
+  errors: string[];
 }
 
 export interface JunkGroup {
@@ -160,6 +203,54 @@ export interface DesktopReport {
 export interface MoveOutcome {
   moved: number;
   moved_bytes: number;
+  errors: string[];
+}
+
+export type WorktreeVerdict = "safe" | "probably_merged" | "record" | "keep";
+
+export interface WorktreeItem {
+  path: string;
+  name: string;
+  common_dir: string;
+  branch: string | null;
+  head: string | null;
+  size_bytes: number;
+  modified_days: number | null;
+  last_commit_days: number | null;
+  last_commit_subject: string | null;
+  ahead: number | null;
+  uncommitted: string[];
+  uncommitted_count: number;
+  line_ending_files: number;
+  verdict: WorktreeVerdict;
+  safety: Safety;
+  owner: string | null;
+  preselect: boolean;
+  summary: string;
+  explanation: string;
+  reasons: string[];
+}
+
+export interface WorktreeRepo {
+  repo: string;
+  common_dir: string;
+  base: string | null;
+  total_bytes: number;
+  items: WorktreeItem[];
+}
+
+export interface WorktreeReport {
+  git_available: boolean;
+  total_bytes: number;
+  safe_bytes: number;
+  repos: WorktreeRepo[];
+}
+
+export interface WorktreeRemoveOutcome {
+  freed_bytes: number;
+  removed: string[];
+  already_gone: string[];
+  skipped: string[];
   errors: string[];
 }
 

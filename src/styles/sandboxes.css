@@ -1,0 +1,98 @@
+/* App sandboxes. Reuses the shared row, badge and reason styles; these are
+   only the parts that are specific to a sandbox card. */
+
+.sb-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  margin-bottom: 14px;
+  overflow: hidden;
+}
+
+.sb-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 16px 8px 10px;
+}
+
+.sb-title {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.sb-head .finding-size {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+}
+
+/* How the sandbox's space divides, coloured by how safe each part is. */
+.sb-bar {
+  display: flex;
+  gap: 2px;
+  height: 8px;
+  margin: 0 16px 10px;
+  border-radius: 4px;
+  overflow: hidden;
+  background: var(--surface-2);
+}
+
+.sb-seg {
+  height: 100%;
+  min-width: 2px;
+}
+
+.sb-seg-safe { background: var(--c-dev); }
+.sb-seg-caution { background: #ba7517; }
+.sb-seg-risky { background: var(--c-app); }
+
+.sb-pkg-reasons {
+  padding: 0 16px 8px;
+}
+
+.sb-card .findings {
+  border-top: 1px solid var(--border);
+  border-radius: 0;
+  border-left: 0;
+  border-right: 0;
+  border-bottom: 0;
+}
+
+.sb-row .safety-reasons {
+  margin-top: 4px;
+}
+
+.sb-sees {
+  margin-top: 4px;
+  overflow-wrap: anywhere;
+}
+
+.sb-toggle {
+  align-self: flex-start;
+  margin-top: 6px;
+}
+
+.sb-progress-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.sb-tiny {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-left: 10px;
+  font-size: 12.5px;
+  color: var(--text-2);
+  cursor: pointer;
+}
+
+@media (prefers-color-scheme: dark) {
+  .sb-seg-caution { background: #fac775; }
+}

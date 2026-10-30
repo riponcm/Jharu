@@ -1,5 +1,5 @@
 use crate::rules::{all_rules, Category, Safety};
-use jwalk::WalkDir;
+use crate::safety::{assess, Facts, Reason};
 use serde::Serialize;
 use std::path::Path;
 use std::time::SystemTime;
@@ -10,9 +10,21 @@ pub struct Finding {
     pub name: String,
     pub description: String,
     pub category: Category,
+    /// Worked out per finding by safety::assess, from the rule's facts and
+    /// live checks of this machine.
     pub safety: Safety,
+    /// Why: one line per question the rating answers, good answers included.
+    pub reasons: Vec<Reason>,
     pub path: String,
     pub size_bytes: u64,
+    /// What clearing this location would actually free. Lower than
+    /// `size_bytes` when files are hard-linked from elsewhere, as uv's cache
+    /// is from every virtualenv it installed into.
+    pub reclaimable_bytes: u64,
+    /// False when `reclaimable_bytes` is the quick estimate (only large files
+    /// checked for links) and the UI should ask `reclaimable_size` for the
+    /// exact figure.
+    pub reclaimable_exact: bool,
     pub file_count: u64,
     /// Days since the newest file inside was modified (rough "last used").
     pub stale_days: Option<u64>,
@@ -39,6 +51,9 @@ pub struct ScanResult {
 
 struct DirStats {
     size: u64,
+    /// What deleting the directory would free (see Finding).
+    reclaimable: u64,
+    reclaimable_exact: bool,
     files: u64,
     newest_mtime: Option<SystemTime>,
     /// Set when the directory exists but could not be fully read. Without this
@@ -48,12 +63,14 @@ struct DirStats {
 }
 
 fn measure_dir(path: &Path) -> DirStats {
-    let mut size = 0u64;
-    let mut files = 0u64;
+    // Counted like Deep clean: each physical file once, online-only cloud
+    // files left out, so a cache's size matches what removing it frees.
+    let mut usage = crate::usage::Usage::default();
+    let mut seen = crate::usage::Seen::default();
     let mut newest: Option<SystemTime> = None;
     let mut read_error: Option<String> = None;
 
-    for result in WalkDir::new(path).skip_hidden(false) {
+    for result in crate::walk::walk(path).skip_hidden(false) {
         let entry = match result {
             Ok(e) => e,
             Err(e) => {
@@ -69,8 +86,7 @@ fn measure_dir(path: &Path) -> DirStats {
         if entry.file_type().is_file() {
             match entry.metadata() {
                 Ok(meta) => {
-                    size += meta.len();
-                    files += 1;
+                    usage.add_file(&entry.path(), &meta, &mut seen);
                     if let Ok(modified) = meta.modified() {
                         if newest.map_or(true, |n| modified > n) {
                             newest = Some(modified);
@@ -83,14 +99,27 @@ fn measure_dir(path: &Path) -> DirStats {
             }
         }
     }
-    DirStats { size, files, newest_mtime: newest, read_error }
+    // The quick pass checks only large files for links. Where none lead
+    // outside, its figure is exact. Where some do (uv's cache, linked into
+    // every virtualenv), small linked files were missed, so the figure is an
+    // upper bound; the exact count opens every file and takes tens of
+    // seconds, so the UI asks for it separately instead of holding the scan.
+    let linked = seen.linked_outside();
+    DirStats {
+        size: usage.bytes,
+        reclaimable: usage.bytes.saturating_sub(linked),
+        reclaimable_exact: linked == 0,
+        files: usage.files,
+        newest_mtime: newest,
+        read_error,
+    }
 }
 
 fn shallow_size(path: &Path) -> u64 {
     if path.is_file() {
         return path.metadata().map(|m| m.len()).unwrap_or(0);
     }
-    WalkDir::new(path)
+    crate::walk::walk(path)
         .skip_hidden(false)
         .into_iter()
         .flatten()
@@ -127,6 +156,7 @@ pub fn scan() -> ScanResult {
     // return empty and their findings silently disappear.
     let findings: Vec<Finding> = {
         let mut collected: Vec<Finding> = vec![];
+        let facts = Facts::gather();
         for rule in all_rules() {
             let mut per_rule: Vec<Finding> = vec![];
             for path in rule.paths() {
@@ -142,14 +172,18 @@ pub fn scan() -> ScanResult {
                 let stale_days = stats.newest_mtime.and_then(|m| {
                     SystemTime::now().duration_since(m).ok().map(|d| d.as_secs() / 86_400)
                 });
+                let (safety, reasons) = assess(&rule, &path, &facts);
                 per_rule.push(Finding {
                     rule_id: rule.id.to_string(),
                     name: rule.name.to_string(),
                     description: rule.description.to_string(),
                     category: rule.category,
-                    safety: rule.safety,
+                    safety,
+                    reasons,
                     path: path.to_string_lossy().into_owned(),
                     size_bytes: stats.size,
+                    reclaimable_bytes: stats.reclaimable.min(stats.size),
+                    reclaimable_exact: stats.reclaimable_exact,
                     file_count: stats.files,
                     stale_days,
                     children: top_children(&path, 8),
@@ -170,7 +204,9 @@ pub fn scan() -> ScanResult {
 
 #[cfg(test)]
 mod tests {
+    /// Read-only scan of this machine: `cargo test --lib smoke_scan -- --ignored --nocapture`
     #[test]
+    #[ignore]
     fn smoke_scan() {
         let result = super::scan();
         println!(
@@ -180,8 +216,9 @@ mod tests {
         );
         for f in &result.findings {
             println!(
-                "{:>9.2} GB  {:8}  {}  ({} files){}",
+                "{:>9.2} GB (frees {:>6.2} GB)  {:8}  {}  ({} files){}",
                 f.size_bytes as f64 / 1e9,
+                f.reclaimable_bytes as f64 / 1e9,
                 format!("{:?}", f.safety),
                 f.name,
                 f.file_count,
@@ -190,6 +227,9 @@ mod tests {
                     .map(|e| format!("  [READ ERROR: {e}]"))
                     .unwrap_or_default()
             );
+            for r in &f.reasons {
+                println!("               {:?}: {}", r.level, r.text);
+            }
         }
         assert!(result.disk_total > 0);
     }

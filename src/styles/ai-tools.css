@@ -1,0 +1,146 @@
+/* AI tools tab. Everything else comes from App.css. */
+
+.ai-tool-head {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.ai-tool-head .section-title {
+  margin-bottom: 0;
+}
+
+.ai-tool-size {
+  font-size: 12.5px;
+  color: var(--text-3);
+}
+
+.ai-running {
+  font-size: 11.5px;
+  padding: 2px 9px;
+  border-radius: 999px;
+  background: #faeeda;
+  color: #633806;
+}
+
+@media (prefers-color-scheme: dark) {
+  .ai-running {
+    background: #412402;
+    color: #fac775;
+  }
+}
+
+.ai-tool-note {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: -4px 0 10px;
+  font-size: 12.5px;
+}
+
+.ai-row {
+  align-items: flex-start;
+}
+
+.ai-row > input,
+.ai-row > .ai-pick {
+  margin-top: 3px;
+}
+
+.ai-row.is-locked {
+  cursor: default;
+}
+
+.ai-explain {
+  font-size: 12.5px;
+  color: var(--text-2);
+  line-height: 1.5;
+  margin: 2px 0 0;
+}
+
+.ai-pick {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  width: 168px;
+  flex: none;
+}
+
+.ai-pick select {
+  font: inherit;
+  font-size: 12.5px;
+  padding: 4px 6px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text);
+}
+
+.ai-pick span {
+  font-size: 11.5px;
+  color: var(--text-3);
+}
+
+.ai-more {
+  display: block;
+  width: 100%;
+  border: none;
+  border-top: 1px solid var(--border);
+  border-radius: 0;
+  background: transparent;
+  color: var(--accent);
+  font-size: 12.5px;
+  padding: 9px 16px;
+}
+
+.ai-progress .meter-track {
+  margin: 6px 0;
+}
+
+.ai-progress-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.ai-ack {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin-top: 10px;
+  font-size: 13px;
+  color: var(--text);
+  cursor: pointer;
+}
+
+.ai-ack input {
+  margin-top: 3px;
+}
+
+.ai-skipped {
+  margin: 4px 0 0;
+  padding-left: 18px;
+  font-size: 12.5px;
+}
+
+.ai-confirm-list {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  margin: 14px 0 0;
+  max-height: 150px;
+  overflow-y: auto;
+  font-size: 12.5px;
+  color: var(--text-2);
+}
+
+.ai-confirm-list li {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+}

@@ -1,0 +1,254 @@
+/* Space history. Reuses the app's colour tokens (App.css) so both themes work. */
+
+.hs-drives {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+  gap: 12px;
+  margin-bottom: 8px;
+}
+
+.hs-drive {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.hs-drive-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.hs-spark {
+  width: 100%;
+  height: 56px;
+}
+
+.hs-forecast {
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--text);
+}
+
+.hs-trend-filling {
+  color: #ba7517;
+}
+
+.hs-trend-not_enough_data,
+.hs-trend-steady,
+.hs-trend-freeing {
+  color: var(--text-2);
+}
+
+.hs-note {
+  font-size: 12px;
+  color: var(--text-3);
+}
+
+.hs-drive-note {
+  margin-top: 8px;
+}
+
+.hs-controls {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+  align-items: center;
+  margin-bottom: 10px;
+  font-size: 13px;
+  color: var(--text-2);
+}
+
+.hs-controls select,
+.hs-fields select,
+.hs-fields input[type="number"] {
+  font: inherit;
+  font-size: 13px;
+  padding: 3px 6px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--surface);
+  color: var(--text);
+}
+
+.hs-fields input[type="number"] {
+  width: 64px;
+}
+
+.hs-headline {
+  font-size: 14.5px;
+  font-weight: 600;
+  margin: 0 0 8px;
+  overflow-wrap: anywhere;
+}
+
+.hs-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 11px 16px;
+}
+
+.hs-row + .hs-row {
+  border-top: 1px solid var(--border);
+}
+
+.hs-row-main {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.hs-bar {
+  height: 4px;
+  background: var(--surface-2);
+  border-radius: 2px;
+  overflow: hidden;
+  margin: 2px 0;
+}
+
+.hs-bar-fill {
+  height: 100%;
+  background: var(--c-app);
+  border-radius: 2px;
+}
+
+.hs-grew {
+  color: #ba7517;
+}
+
+.hs-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  align-items: flex-end;
+}
+
+.hs-toggles {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin: 8px 0;
+}
+
+.hs-progress-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 4px;
+}
+
+.hs-settings {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 6px 16px 14px;
+}
+
+.hs-setting {
+  padding: 12px 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.hs-setting + .hs-setting {
+  border-top: 1px solid var(--border);
+}
+
+.hs-check {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  font-size: 14px;
+}
+
+.hs-fields {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+  align-items: center;
+  font-size: 13px;
+  color: var(--text-2);
+  padding-left: 24px;
+}
+
+.hs-rules {
+  margin: 0;
+  padding-left: 42px;
+  font-size: 12.5px;
+  color: var(--text-2);
+  line-height: 1.5;
+}
+
+.hs-save {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  flex-wrap: wrap;
+  border-top: 1px solid var(--border);
+  padding-top: 12px;
+}
+
+.hs-preview {
+  margin-top: 12px;
+}
+
+.hs-list {
+  list-style: none;
+  margin: 8px 0;
+  padding: 0;
+  font-size: 12.5px;
+  color: var(--text-2);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.hs-list code {
+  overflow-wrap: anywhere;
+}
+
+.hs-size {
+  color: var(--text);
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.hs-skipped {
+  color: var(--text-3);
+}
+
+.hs-run {
+  padding: 10px 16px;
+}
+
+.hs-run + .hs-run {
+  border-top: 1px solid var(--border);
+}
+
+.hs-run summary {
+  cursor: pointer;
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.hs-run-sum {
+  font-size: 12.5px;
+  color: var(--text-2);
+}
+
+@media (max-width: 720px) {
+  .hs-row {
+    flex-wrap: wrap;
+  }
+}

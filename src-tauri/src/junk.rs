@@ -14,6 +14,12 @@ pub struct JunkItem {
     /// a floor rather than the real total. Without this a location we lack
     /// rights to read looks identical to one that is genuinely empty.
     pub read_error: Option<String>,
+    /// Set for folders the system keeps using (temp, crash dumps, update
+    /// caches): cleaning moves their contents through `clean_locations`
+    /// instead of moving the folder itself.
+    pub location: Option<String>,
+    /// Cleaning needs administrator permission; Windows will ask for it.
+    pub needs_admin: bool,
 }
 
 #[derive(Serialize)]
@@ -39,7 +45,7 @@ fn dir_size_checked(path: &Path) -> (u64, Option<String>) {
     }
     let mut size = 0u64;
     let mut read_error: Option<String> = None;
-    for result in jwalk::WalkDir::new(path).skip_hidden(false) {
+    for result in crate::walk::walk(path).skip_hidden(false) {
         match result {
             Ok(entry) => {
                 // jwalk hands back a directory it could not open as an Ok entry
@@ -115,6 +121,8 @@ fn scan_installers(downloads: &Path) -> (Vec<JunkItem>, Vec<JunkItem>) {
                 stale_days: stale_days(&p),
                 safe: true,
                 read_error: None,
+                location: None,
+                needs_admin: false,
             };
             if INSTALLER_EXT.contains(&ext.as_str()) {
                 installers.push(item);
@@ -134,7 +142,7 @@ fn scan_large_stale(home: &Path) -> Vec<JunkItem> {
         if !base.exists() {
             continue;
         }
-        for entry in jwalk::WalkDir::new(&base).skip_hidden(true).into_iter().flatten() {
+        for entry in crate::walk::walk(&base).skip_hidden(true).into_iter().flatten() {
             if !entry.file_type().is_file() {
                 continue;
             }
@@ -152,6 +160,8 @@ fn scan_large_stale(home: &Path) -> Vec<JunkItem> {
                     stale_days: days,
                     safe: false,
                     read_error: None,
+                    location: None,
+                    needs_admin: false,
                 });
             }
         }
@@ -201,6 +211,8 @@ pub async fn junk_scan() -> Result<Vec<JunkGroup>, String> {
                             stale_days: stale_days(&p),
                             safe: false,
                             read_error: None,
+                            location: None,
+                            needs_admin: false,
                         }
                     })
                     .filter(|i| i.size_bytes > 0)
@@ -227,6 +239,8 @@ pub async fn junk_scan() -> Result<Vec<JunkGroup>, String> {
                         stale_days: None,
                         safe: true,
                         read_error: None,
+                        location: Some("mac-logs".into()),
+                        needs_admin: false,
                     });
                 }
             }
@@ -256,6 +270,8 @@ pub async fn junk_scan() -> Result<Vec<JunkGroup>, String> {
                             stale_days: None,
                             safe: true,
                             read_error: None,
+                            location: Some("mail-downloads".into()),
+                            needs_admin: false,
                         }],
                     );
                 }
@@ -269,9 +285,9 @@ pub async fn junk_scan() -> Result<Vec<JunkGroup>, String> {
             let windir = std::path::PathBuf::from(windir);
 
             let mut temp_items = vec![];
-            for (label, path) in [
-                ("Your temp folder (%TEMP%)", local.join("Temp")),
-                ("System temp folder", windir.join("Temp")),
+            for (label, path, id, admin) in [
+                ("Your temp folder (%TEMP%)", local.join("Temp"), "user-temp", false),
+                ("System temp folder", windir.join("Temp"), "system-temp", true),
             ] {
                 if path.exists() {
                     let (size, read_error) = dir_size_checked(&path);
@@ -285,6 +301,8 @@ pub async fn junk_scan() -> Result<Vec<JunkGroup>, String> {
                             stale_days: stale_days(&path),
                             safe: true,
                             read_error,
+                            location: Some(id.into()),
+                            needs_admin: admin,
                         });
                     }
                 }
@@ -299,27 +317,34 @@ pub async fn junk_scan() -> Result<Vec<JunkGroup>, String> {
             );
 
             let mut sys_items = vec![];
-            for (label, path, safe) in [
+            // Windows.old has no location: the whole folder is what the user
+            // means to remove, and it needs ownership changes beyond plain
+            // administrator rights, so it keeps the ordinary single move.
+            for (label, path, safe, location) in [
                 (
                     "Windows Update downloads",
                     windir.join("SoftwareDistribution/Download"),
                     true,
+                    Some("update-downloads"),
                 ),
                 (
                     "Delivery Optimization files",
                     windir.join("ServiceProfiles/NetworkService/AppData/Local/Microsoft/Windows/DeliveryOptimization"),
                     true,
+                    Some("delivery-optimization"),
                 ),
-                ("Crash dumps", local.join("CrashDumps"), true),
+                ("Crash dumps", local.join("CrashDumps"), true, Some("crash-dumps")),
                 (
                     "Error reporting archive",
                     std::path::PathBuf::from("C:\\ProgramData\\Microsoft\\Windows\\WER"),
                     true,
+                    Some("error-reports"),
                 ),
                 (
                     "Previous Windows installation (Windows.old)",
                     std::path::PathBuf::from("C:\\Windows.old"),
                     false,
+                    None,
                 ),
             ] {
                 if path.exists() {
@@ -332,6 +357,10 @@ pub async fn junk_scan() -> Result<Vec<JunkGroup>, String> {
                             stale_days: stale_days(&path),
                             safe,
                             read_error,
+                            location: location.map(String::from),
+                            needs_admin: location.is_some_and(|id| {
+                                crate::cleaning::location(id).is_some_and(|l| l.admin)
+                            }),
                         });
                     }
                 }
@@ -367,6 +396,8 @@ pub async fn junk_scan() -> Result<Vec<JunkGroup>, String> {
                             stale_days: None,
                             safe: false,
                             read_error,
+                            location: None,
+                            needs_admin: false,
                         }],
                     );
                 }
@@ -401,6 +432,8 @@ pub async fn junk_scan() -> Result<Vec<JunkGroup>, String> {
                             stale_days: None,
                             safe: false,
                             read_error: None,
+                            location: None,
+                            needs_admin: false,
                         }],
                     );
                 }

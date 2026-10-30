@@ -28,7 +28,26 @@ export default function DevClean({ onRecovered }: { onRecovered: (bytes: number)
     setScanning(true);
     setError(null);
     try {
-      setResult(await invoke<ScanResult>("scan_system"));
+      const scanned = await invoke<ScanResult>("scan_system");
+      setResult(scanned);
+      // Where the scan could only estimate what clearing frees (hard links
+      // to elsewhere, as in uv's cache), fetch the exact figure afterwards.
+      for (const f of scanned.findings.filter((x) => !x.reclaimable_exact)) {
+        invoke<number>("reclaimable_size", { path: f.path })
+          .then((exact) =>
+            setResult((r) =>
+              r && {
+                ...r,
+                findings: r.findings.map((x) =>
+                  x.path === f.path
+                    ? { ...x, reclaimable_bytes: Math.min(exact, x.size_bytes), reclaimable_exact: true }
+                    : x
+                ),
+              }
+            )
+          )
+          .catch(() => {});
+      }
     } catch (e) {
       setError(String(e));
     } finally {
@@ -45,7 +64,11 @@ export default function DevClean({ onRecovered }: { onRecovered: (bytes: number)
     const sum = (f: (x: Finding) => boolean) =>
       result.findings.filter(f).reduce((a, x) => a + x.size_bytes, 0);
     const total = sum(() => true);
-    const reclaimable = sum((x) => x.safety !== "risky");
+    // What clearing really frees, not the folders' size: a uv cache linked
+    // into virtualenvs is large but frees little.
+    const reclaimable = result.findings
+      .filter((x) => x.safety !== "risky")
+      .reduce((a, x) => a + x.reclaimable_bytes, 0);
     const ml = sum((x) => x.category === "ml_models");
     const dev = sum((x) => x.category === "dev_cache");
     const appData = sum((x) => x.category === "app_data");
@@ -59,7 +82,11 @@ export default function DevClean({ onRecovered }: { onRecovered: (bytes: number)
     setConfirming(null);
     setExpanded(null);
     try {
-      const outcome = await invoke<CleanOutcome>("clean_paths", { paths: [finding.path] });
+      const outcome = await invoke<CleanOutcome>("clean_paths", {
+        paths: [finding.path],
+        // The Recycle Bin tab calls only what was rated safe here a safe cache.
+        source: finding.safety === "safe" ? "Dev clean" : "Dev clean (not rated safe)",
+      });
       if (outcome.errors.length) setError(outcome.errors.join("; "));
       onRecovered(outcome.freed_bytes);
       setResult((r) =>
@@ -94,7 +121,7 @@ export default function DevClean({ onRecovered }: { onRecovered: (bytes: number)
             kind: confirming.category === "ml_models" ? "model" : "cache",
             title: `Clean ${confirming.name}?`,
             items: [confirming.path],
-            bytes: confirming.size_bytes,
+            bytes: confirming.reclaimable_bytes,
             risky: confirming.safety === "risky",
           }}
           busy={cleaning === confirming.path}
@@ -206,6 +233,27 @@ export default function DevClean({ onRecovered }: { onRecovered: (bytes: number)
                         )}
                       </div>
                       <code className="finding-path">{f.path}</code>
+                      <ul className="safety-reasons">
+                        {f.reasons.map((r) => (
+                          <li key={r.text} className={`reason-${r.level}`}>
+                            <span className="reason-mark" aria-hidden>
+                              {r.level === "ok" ? "✓" : r.level === "warn" ? "!" : "✕"}
+                            </span>
+                            {r.text}
+                          </li>
+                        ))}
+                      </ul>
+                      {f.size_bytes - f.reclaimable_bytes >= 1e8 && (
+                        <p className="finding-desc">
+                          {f.reclaimable_exact
+                            ? `Clearing it frees ${formatBytes(f.reclaimable_bytes)}.`
+                            : `Clearing it frees at most ${formatBytes(f.reclaimable_bytes)} — checking hard links for the exact figure…`}{" "}
+                          {f.reclaimable_exact ? "" : "At least "}
+                          {formatBytes(f.size_bytes - f.reclaimable_bytes)} of these files are also used
+                          elsewhere through hard links (usually your virtual environments or projects),
+                          so they stay on disk until those are removed too.
+                        </p>
+                      )}
                     </div>
                     <div className="finding-size">
                       <span className="size">{formatBytes(f.size_bytes)}</span>

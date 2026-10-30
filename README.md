@@ -77,6 +77,9 @@ See a scan, a plain-English breakdown, and a click to clean — with the real nu
 
 ## Features
 
+**Overview.**
+The page Jharu opens on. A ring for every drive with when it fills up, what Jharu has saved (from its Recycle Bin log, week by week), what can be cleaned right now split into safe, with care and review first, live CPU and memory, a map of where the system drive's space goes (from the last Deep clean of it), and the latest cleans. A small card asks for a GitHub star or a share, and leads with what Jharu has saved once that passes a gigabyte; closing it or starring hides it for good.
+
 **ML models — keep what you use, remove what you never loaded.**
 Every downloaded model listed individually, across Hugging Face, Ollama, Whisper, PyTorch and Keras. Jharu distinguishes models you have actually loaded from models that were downloaded once and never opened since, so you can reclaim the second kind without touching the first. Ollama layers shared between models are kept, so removing one model never breaks another. No other cleaner makes this distinction.
 
@@ -86,8 +89,29 @@ Scans 25+ known developer and machine learning cache locations — Hugging Face,
 **Python environments.**
 Finds every virtualenv and conda environment, sizes the packages inside them, and shows what duplication costs across environments — the "torch is installed eleven times" problem, quantified.
 
+**Git worktrees.**
+Finds the spare checkouts that `git worktree`, Claude Code and Codex leave behind, each one a full copy of its repository. Jharu asks git whether each worktree's commits are already on the main branch and whether anything is uncommitted, ignores files that differ only in line endings, and preselects only the merged, clean ones. Worktrees with unmerged commits or uncommitted files are kept, with the exact commits and files listed. Branches are never deleted, so any removed worktree can be recreated with `git worktree add`.
+
+**Build folders.**
+Finds build output inside your projects, in the way of npkill and kondo, but a folder is offered only when the project beside it confirms what it is: `node_modules` next to a `package.json`, Rust `target` next to a `Cargo.toml` holding Cargo's `CACHEDIR.TAG`, `dist` or `build` only when `.gitignore` lists them and the project has a build command, plus `.next`, `.nuxt`, `__pycache__`, `.pytest_cache`, `.mypy_cache`, `.tox`, Gradle `build` and `.gradle`, `.dart_tool`, `Pods`, CMake build folders and `.venv`. Each project shows when its own source files last changed (not its build output), each folder shows the real space freed and the command that brings it back. Safe means the build rebuilds it by itself or a lockfile makes the reinstall identical; virtualenvs and CMake folders are Caution, and anything a dev server or build tool is running from, or whose lock file is held, is skipped. Sort by size, filter by projects untouched for 30, 90 or 180 days, add your own search folders. Removal goes to the Trash or Recycle Bin with progress and a Cancel button.
+
+**AI tools.**
+Finds what AI coding assistants leave behind, tool by tool: Claude Code and the Claude desktop app, OpenAI Codex, Cursor, Windsurf (Codeium), GitHub Copilot in VS Code, Continue and Aider. Caches, logs and downloads that the tool rebuilds are rated safe once the tool is closed and held back while it runs. Conversation transcripts, memory, settings and extensions are rated risky: they are listed with size and age, never preselected, and old sessions can be trimmed with an "older than N days" choice (today's are never touched, and a project's memory notes are left alone). An editor's per-project storage is flagged "project folder is gone" when the project no longer exists, and left alone when it does. Aider's files inside your projects are only listed. Each item is checked again just before it moves to the Recycle Bin or Trash, with progress and a Cancel button; spare git checkouts are left to the Git worktrees tab.
+
+**Duplicates.**
+Finds identical files in the folders you choose (default: Documents, Downloads, Desktop, Pictures, Videos, Music) and the same model or package stored by several tools: Hugging Face, Ollama, LM Studio, PyTorch, and the pip, uv and conda caches. Files are grouped by size, then compared by their first and last 64 KB, and only the survivors are read in full and hashed (BLAKE3), so nothing is called a duplicate by name, size or date. Hard links, which are several names for one file, are not duplicates and are listed separately as already sharing space; cloud placeholders that are stored only online are never read. Each set keeps one copy (the one whose tool is running, or the one outside Downloads, then the oldest — you can change it) and moves the others to the Trash or Recycle Bin after re-reading both and comparing hashes again. Every copy carries a safety rating with reasons: tool-cache copies are rated like Dev clean, your own files are Caution, copies inside a Git repository, app or Python environment are never removed, and files in OneDrive, iCloud or Dropbox are Risky. The scan and the removal show progress and can be cancelled.
+
+**App sandboxes.**
+Store and other packaged (MSIX) apps on Windows keep a private, virtualized copy of AppData in `%LOCALAPPDATA%\Packages\<app>`, which Explorer and most cleaners never show; one app's package held 86 GB of dev caches, build folders and recordings. Jharu lists every package with its app name, whether the app is still installed, whether it is running, its real size and a breakdown by area. Temp and web-cache folders are Safe only while the app is not running; the app's own data (`LocalState`, `Settings`) is Risky and never offered; packages whose app was removed are Caution. Inside `LocalCache`, Dev clean's rules and Deep clean's verdicts rate each folder exactly as they would the real one (a uv cache there is a uv cache). Only the rated folders move to the Recycle Bin, each re-checked just before, with progress and a Cancel button. On macOS the same applies to `~/Library/Containers` and `~/Library/Group Containers`.
+
+**System space.**
+Shows the big things the operating system keeps that no folder scan can offer to clean, each with its current size, what turning it off costs, a safety rating with the reasons, and the exact command Jharu will run. On Windows: the hibernation file (turn off, or shrink to the reduced type), System Restore points (delete the oldest, or all but the newest), the component store / WinSxS (analyzed with DISM on request, cleaned with `/StartComponentCleanup`, never `/ResetBase`), the page file (information only; Jharu never changes it) and Docker. On macOS: Time Machine local snapshots, the sleep image (information only) and Docker. Docker offers `docker system prune` (stopped containers, unused networks, dangling images, unused build cache; volumes untouched) and, as a separate option labelled risky, the same with `--volumes`. These are not files, so they cannot go to the Recycle Bin or Trash: every action that cannot be undone says so and asks for confirmation, and the administrator steps run through a helper that accepts only a fixed list of action ids, never a command line. Looking at restore points and the component store needs administrator permission, so it waits for a click.
+
+**Recycle Bin.**
+Shows what is in the Recycle Bin (Trash on macOS) with its original location, deletion time and size, split into what Jharu moved there and your own deleted files, each rated with the reasons why. Empty everything, items older than N days, or only Jharu's own items older than N days; emptying is permanent, so it asks with the exact total first and re-checks every item right before it goes. Jharu also keeps a log of everything it sends to the bin (`trash-log.jsonl` under the app's local data folder) with one-click restore, which never overwrites a file that is already in the original place and keeps file extensions intact.
+
 **Deep clean.**
-Full-disk analysis as a treemap or a list. Folders are sized by what they hold and classified as system, applications, your files, app data or developer data. Click a block to go inside it. System locations are protected and can never be cleaned from the app.
+Full-disk analysis as a treemap or a list, with results as they come in. Folders are sized by what they hold, classified as system, applications, your files, app data or developer data, and each one carries a safety rating with the reasons. The Map view draws the current level as a squarified treemap: box area is size on disk and colour is the safety rating, with the reasons in the tooltip; click or press Enter to go inside, and every box can be reached from the keyboard. Folders Jharu cannot read are named above the map instead of quietly left out. System locations are protected and can never be cleaned from the app.
 
 **Junk files.**
 Non-cache junk: installers and archives in Downloads, old device backups, logs and crash reports, mail attachment copies, large files untouched for six months, and on Windows the temp folders, Windows Update cache, Delivery Optimization files and crash dumps.
@@ -103,6 +127,18 @@ Lists installed applications with both their own size and the data they have acc
 
 **Drive health.**
 Capacity and SMART status per drive, plus a fill forecast built from a daily capacity reading that projects when a drive will run out of space. Wear level, temperature and power-on hours are shown when `smartctl` is available.
+
+**Space history.**
+Remembers where the space is. After each Deep clean scan of a drive or your home folder, and every few hours in the background, Jharu stores a compact snapshot (used and free space per drive, plus the sizes of the largest folders three levels deep, 90 days, thinned to daily). The tab then answers "what grew since last time": the folders that grew or shrank most between two snapshots, the drive's change in free space, and Deep clean's safe-to-remove rating for each grown folder. A forecast fits the last 30 days of free space (the median of the day-to-day trend, so one cleanup does not distort it) and says when a drive fills up, or says plainly that there is not enough data or that space is not shrinking. The same sentence appears on Drive health. It can also send a system notification when a drive drops below a free-space limit you set. Optional scheduled cleaning, off by default, clears only Dev clean caches that are rated Safe, that their tool rebuilds by itself and that nothing has touched for a number of days; each is checked again right before it moves to the Recycle Bin or Trash, nothing runs during a scan or clean, and every run is written to the history.
+
+**Startup apps.**
+Lists what starts when you sign in: Run keys, Startup folders and logon tasks on Windows, LaunchAgents, LaunchDaemons and login items on macOS (listing only on macOS). Each entry shows its publisher, command, whether its program still exists, and an estimated impact from file size and what is running now. Entries whose program is gone are rated safe to turn off; updaters and unfamiliar programs need a look; security software, hardware drivers and Windows or Apple components are protected and never offered. Turning an entry off flips the same StartupApproved flag Task Manager uses, so it is always reversible and the entry is never deleted. Machine-wide entries ask for administrator permission once.
+
+**Speed (task killer).**
+A live bar of CPU, memory, swap, disk activity and process count, refreshed every two seconds while the tab is open, above the running programs grouped by program (a browser is one row, not forty) and sortable by CPU, memory or disk. Each row has a rating and the reasons for it: system processes, security software, drivers, anything under the Windows or macOS system folders, Jharu itself and the programs that started it, other users' processes and anything whose owner Jharu cannot read are protected and offer no action; programs with a window, an editor, office app, browser or terminal, a program with other programs started from it, a helper that another running program started, or a window that is not responding are Caution; only a program with no window, nothing started from it and nothing else running that started it is Safe, and it is still only closed when you click. **Close** is graceful: on Windows it posts the same close request as the window's X button (the program can ask you to save), on macOS it asks the app to quit the way the Dock does (a program that is not an app gets SIGTERM), then waits up to five seconds and says which processes ended. A program with no window says so and offers **Force quit**, which asks a second time and says plainly that anything unsaved is lost. Jharu never closes programs in bulk or on its own, and checks every process again right before signalling (same pid, start time, program and user, still not protected) so a recycled process number is never hit. On macOS an app's helper processes are listed, and closed, with the app.
+
+**Floating gadget.**
+Optional and off until you turn it on (About or Speed). A small black always-on-top window with ring gauges, either a slim bar (CPU, memory, free space on the system drive and when it runs out) or a card that adds the busiest programs and one button to clean safe caches, which shows what it would move and asks first. Drag it anywhere; it reopens where you left it, and its ✕ turns it off. It reads a few numbers every two seconds and never scans the disk in the background.
 
 **In-app updates.**
 Jharu checks GitHub releases for new versions and downloads and installs them from inside the app — signed, verified, and with a one-click restart.
@@ -129,14 +165,19 @@ Generic cleaners are built to look busy and sell a subscription. Jharu does one 
 | Python | pip cache, uv cache, conda package cache, stale conda environments |
 | JavaScript | npm cache (`~/.npm/_cacache`), yarn cache, pnpm store, Puppeteer and Playwright browser downloads |
 | Build tools | Xcode DerivedData and archives, Gradle caches, Maven repository, Cargo registry, Go module cache, NuGet packages |
-| Containers | Docker VM data and image storage |
+| AI coding tools | Claude Code (`~/.claude`), Claude desktop caches and logs, Codex (`~/.codex`), Cursor and Windsurf app data, Copilot and other editor caches, Continue (`~/.continue`), Aider history files |
+| Git worktrees | Merged worktree folders from `git worktree`, Claude Code (`<repo>/.claude/worktrees`) and Codex (`~/.codex/worktrees`), plus stale worktree records (`git worktree prune`) |
+| Project build folders | `node_modules`, Rust `target`, `.next`, `.nuxt`, `dist`/`build` (when `.gitignore` confirms), `__pycache__`, pytest/mypy/tox caches, Gradle, Dart, CocoaPods and CMake build folders, and project `.venv`s |
+| App sandboxes | Temp, web cache and caches inside the private folders of Store/MSIX apps (`%LOCALAPPDATA%\Packages`) and sandboxed Mac apps (`~/Library/Containers`), plus the data of apps you already removed |
+| Containers | Docker VM data and image storage, `docker system prune` |
+| System space | Hibernation file, System Restore points, component store (WinSxS), Time Machine local snapshots |
 | IDEs | JetBrains caches, editor cache directories |
 | App leftovers | Support files, caches, preferences, and logs from uninstalled applications |
 | Junk | Installers in Downloads, old device backups, crash reports, mail attachment copies, large stale files |
 
 ## Safety model
 
-- Nothing is ever permanently deleted. Every clean action moves data to the Trash or Recycle Bin, where it can be restored.
+- Nothing is ever permanently deleted. Every clean action moves data to the Trash or Recycle Bin, where it can be restored. The one exception is System space, whose targets are not files (restore points, snapshots, Docker data, the hibernation setting): each of those actions says whether it can be undone and needs its own confirmation.
 - Every finding carries a safety rating: safe to clear, re-downloadable, or review first.
 - Operating system locations are protected and excluded from cleaning entirely.
 - Every clean is confirmed by a dialog that states the actual consequence — a cache rebuilds itself, a model is re-downloaded, an environment must be recreated, your own files are gone for good.
@@ -163,10 +204,10 @@ On macOS, grant Full Disk Access (System Settings, Privacy and Security) for com
 
 ### Opening Jharu the first time
 
-Jharu is not yet signed with a paid developer certificate (see [Support Jharu](#support-jharu) below), so your operating system shows a one-time warning the first time you open it. This is expected for open source apps and does not mean anything is wrong — the download is verified by a cryptographic signature on every in-app update.
+From version 1.0.0, Jharu is signed on both platforms: the Mac app with an Apple Developer ID and notarized by Apple, and the Windows installer through Azure Artifact Signing. It opens like any other app, and every in-app update is verified by a cryptographic signature too.
 
-- **macOS:** if you see "Jharu cannot be opened because Apple cannot verify it", right-click (or Control-click) the app and choose **Open**, then confirm. You only do this once.
-- **Windows:** if SmartScreen shows "Windows protected your PC", click **More info**, then **Run anyway**.
+- **macOS:** opens normally. Versions before 1.0.0 were unsigned; if one shows "Jharu cannot be opened because Apple cannot verify it", right-click (or Control-click) the app and choose **Open**, then confirm.
+- **Windows:** the installer names the publisher. While a new signature builds its reputation, SmartScreen may still show "Windows protected your PC" for a while; click **More info** to see the publisher, then **Run anyway**.
 
 ## Frequently asked questions
 
@@ -175,6 +216,9 @@ Open Jharu's Dev clean tab. It lists your Hugging Face hub cache (`~/.cache/hugg
 
 **Is it safe to delete npm, pip, or other package manager caches?**
 Yes. These caches only speed up reinstalls and are rebuilt automatically on the next install. Jharu marks them "Safe to clear". Deleting an active project's `node_modules` or a conda environment you still use is different — Jharu rates those "Review first".
+
+**How do I clean up old git worktrees left by Claude Code or Codex?**
+Open Jharu's Git worktrees tab. It lists every worktree of every repository it finds, with its size, branch, and last commit, and says whether its work is already on the main branch. Merged, clean worktrees are preselected; removing them moves the folders to the Trash or Recycle Bin and runs `git worktree prune`. Worktrees a tool created for a session are never preselected, because the tool may still be using them.
 
 **Does Jharu permanently delete my files?**
 No. Every clean action moves data to the macOS Trash or Windows Recycle Bin, where it can be restored. Jharu never bypasses the Trash.
@@ -204,30 +248,32 @@ Jharu's Uninstaller lists every installed app together with the data it has accu
 ## Roadmap
 
 - Orphaned-data detection by comparing leftover folders against installed applications
-- Duplicate file detection
 - Detailed drive health on Windows, which currently reports capacity only
 - Localized UI, starting with Bengali and Hindi
 
 Shipped in 0.2.0: per-model ML intelligence, Python environment analysis, the
 desktop cleaner, Windows uninstaller and junk rules, the deep clean treemap and
-the fill forecast. See the [changelog](CHANGELOG.md).
+the fill forecast. Shipped in 1.0.0: the overview, git worktrees, build
+folders, AI tools, duplicates, app sandboxes, system space, the Recycle Bin
+and Trash, space history, startup apps, the task killer and the floating
+gadget. See the [changelog](CHANGELOG.md).
 
 ## Support Jharu
 
 Jharu is free, open source, and has no ads, telemetry, or paid tier — and it always will. But shipping a desktop app that users can install without scary security warnings costs real money every year, and that is the one thing an individual developer cannot absorb alone:
 
-| What it unlocks | Cost |
+| What it pays for | Cost |
 | --- | --- |
 | **Apple notarization** — removes the "Apple cannot verify this app" warning on every Mac | 99 USD / year (Apple Developer Program) |
-| **Windows code signing** — removes the "Windows protected your PC" SmartScreen warning | ~100–400 USD / year (code signing certificate) |
+| **Windows code signing** — shows the publisher instead of "Unknown publisher" | ~120 USD / year (Azure Artifact Signing) |
 
-Every star and every sponsorship goes directly toward these costs. If Jharu reclaimed gigabytes of your disk, here is how you can pay it forward in seconds:
+Both are now paid for out of pocket, and every star and every sponsorship goes directly toward keeping them renewed. If Jharu reclaimed gigabytes of your disk, here is how you can pay it forward in seconds:
 
 - **Star the repository.** It is free, it takes one click, and it is the single biggest thing that helps other developers discover Jharu.
 - **Sponsor the project.** Even a one-time contribution the size of a coffee helps cover the signing certificates that make Jharu safe and frictionless for everyone to install. Use the **Sponsor** button at the top of this repository.
 - **Spread the word.** Share Jharu with a teammate whose disk is always full, or post about it — reach is what turns a side project into a maintained tool.
 
-Once the signing costs are covered, every release will install cleanly on macOS and Windows with no warnings at all. Thank you for helping keep Jharu free and independent.
+Your support keeps every release installing cleanly on macOS and Windows. Thank you for helping keep Jharu free and independent.
 
 ## Contributing
 

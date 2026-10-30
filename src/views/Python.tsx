@@ -32,7 +32,7 @@ export default function Python({ onRecovered }: { onRecovered: (bytes: number) =
     setWorking(true);
     setConfirming(null);
     try {
-      const outcome = await invoke<CleanOutcome>("clean_paths", { paths: [path] });
+      const outcome = await invoke<CleanOutcome>("clean_paths", { paths: [path], source: "Python" });
       if (outcome.errors.length) setError(outcome.errors.join("; "));
       onRecovered(outcome.freed_bytes);
       await scan();
